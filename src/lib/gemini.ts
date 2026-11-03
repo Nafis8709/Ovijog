@@ -31,31 +31,94 @@ export function modelName(): string {
   return process.env.GEMINI_MODEL || DEFAULT_MODEL;
 }
 
-// Sends a prompt (plus optional images) and asks for JSON that matches `schema`.
-// Returns the parsed object. Throws if the model does not return valid JSON.
-export async function generateJson<T>(prompt: string, images: ImageInput[], schema: object): Promise<T> {
-  const client = getClient();
+// Backup models, tried in order when the main model is overloaded.
+// Override with GEMINI_FALLBACK_MODELS="model-a,model-b" (empty string turns this off).
+const DEFAULT_FALLBACK_MODELS = ["gemini-3.1-flash-lite", "gemini-flash-latest"];
 
-  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
-  parts.push({ text: prompt });
-  for (const image of images) {
-    parts.push({ inlineData: { mimeType: image.mimeType, data: image.base64 } });
+function fallbackModels(): string[] {
+  const setting = process.env.GEMINI_FALLBACK_MODELS;
+  const list: string[] = [];
+  const source = setting === undefined ? DEFAULT_FALLBACK_MODELS : setting.split(",");
+  for (const item of source) {
+    const name = item.trim();
+    if (name !== "" && name !== modelName() && !list.includes(name)) {
+      list.push(name);
+    }
   }
+  return list;
+}
 
-  const response = await client.models.generateContent({
-    model: modelName(),
+function errorStatus(error: unknown): number {
+  const status = (error as { status?: unknown })?.status;
+  return typeof status === "number" ? status : 0;
+}
+
+// 429 (rate limit), 500, 503 (overloaded) and 504 usually pass if you wait a moment.
+function isTemporary(error: unknown): boolean {
+  const status = errorStatus(error);
+  return status === 429 || status === 500 || status === 503 || status === 504;
+}
+
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function callModel<T>(model: string, parts: object[], schema: object): Promise<T> {
+  const response = await getClient().models.generateContent({
+    model: model,
     contents: [{ role: "user", parts: parts }],
     config: {
       responseMimeType: "application/json",
       responseJsonSchema: schema,
     },
   });
-
   const text = response.text;
   if (!text) {
     throw new Error("The AI returned an empty response.");
   }
   return JSON.parse(text) as T;
+}
+
+// Sends a prompt (plus optional images) and asks for JSON that matches `schema`.
+// When Gemini is busy it retries the main model twice (after 1.5 s and 4 s),
+// then tries each backup model once. Throws the first error if everything fails.
+export async function generateJson<T>(prompt: string, images: ImageInput[], schema: object): Promise<T> {
+  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
+  parts.push({ text: prompt });
+  for (const image of images) {
+    parts.push({ inlineData: { mimeType: image.mimeType, data: image.base64 } });
+  }
+
+  const delays = [0, 1500, 4000];
+  let firstError: unknown = null;
+
+  for (const delay of delays) {
+    if (delay > 0) {
+      await wait(delay);
+    }
+    try {
+      return await callModel<T>(modelName(), parts, schema);
+    } catch (error) {
+      if (firstError === null) {
+        firstError = error;
+      }
+      if (!isTemporary(error)) {
+        throw error; // a wrong key or bad request will not fix itself
+      }
+      console.warn(`Gemini ${modelName()} busy (status ${errorStatus(error)}), retrying`);
+    }
+  }
+
+  for (const backup of fallbackModels()) {
+    try {
+      console.warn(`Trying backup model ${backup}`);
+      return await callModel<T>(backup, parts, schema);
+    } catch (error) {
+      console.warn(`Backup model ${backup} failed (status ${errorStatus(error)})`);
+    }
+  }
+
+  throw firstError;
 }
 
 // Converts "data:image/jpeg;base64,AAAA" into { mimeType, base64 }.
@@ -80,10 +143,11 @@ export function describeAiError(error: unknown): string {
   if (status === 404 || lower.includes("not found")) {
     return `The AI model "${modelName()}" is not available for this API key. Set GEMINI_MODEL to gemini-flash-latest and redeploy.`;
   }
-  if (status === 429 || lower.includes("quota") || lower.includes("rate")) {
+  if (status === 429 || lower.includes("quota")) {
     return "The AI is receiving too many requests right now (free-tier limit). Wait a minute and try again.";
   }
-  // Short, key-free hint for whoever runs the app (helps diagnose hosting problems).
-  const hint = message.replace(/AIza[0-9A-Za-z_-]+/g, "[key]").replace(/\s+/g, " ").slice(0, 220);
-  return `The AI could not analyse this case right now. Please try again in a moment. (Details: ${status || "no status"} ${hint})`;
+  if (status === 503 || status === 500 || status === 504 || lower.includes("high demand")) {
+    return "Google's AI service is busy right now. Wait a minute and try again, or open the sample case.";
+  }
+  return `The AI could not finish this step. Please try again in a moment.${status ? ` (error ${status})` : ""}`;
 }

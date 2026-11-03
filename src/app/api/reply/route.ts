@@ -12,6 +12,8 @@ import { mockReply } from "@/lib/mockAi";
 const MAX_REPLY = 2000;
 const MAX_IMAGE_CHARS = 2_000_000;
 
+export const maxDuration = 60; // seconds, room for retries when the AI is busy
+
 export async function POST(request: Request): Promise<Response> {
   let body: { analysis?: unknown; history?: unknown; sellerReply?: unknown; image?: unknown };
   try {

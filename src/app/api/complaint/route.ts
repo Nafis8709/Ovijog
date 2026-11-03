@@ -8,6 +8,8 @@ import { mockComplaint } from "@/lib/mockAi";
 import { buildComplaintPrompt, complaintSchema } from "@/lib/prompts";
 import { cleanAnalysis, cleanComplaint } from "@/lib/validate";
 
+export const maxDuration = 60; // seconds, room for retries when the AI is busy
+
 export async function POST(request: Request): Promise<Response> {
   let body: {
     story?: unknown;

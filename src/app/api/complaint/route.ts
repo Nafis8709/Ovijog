@@ -3,7 +3,7 @@
 // Output: { complaint } — subject, body paragraphs, relief and evidence list in Bangla.
 // The letter header, address and signature are added by the letter page, not the AI.
 
-import { AiConfigError, generateJson, isMockMode } from "@/lib/gemini";
+import { AiConfigError, describeAiError, generateJson, isMockMode } from "@/lib/gemini";
 import { mockComplaint } from "@/lib/mockAi";
 import { buildComplaintPrompt, complaintSchema } from "@/lib/prompts";
 import { cleanAnalysis, cleanComplaint } from "@/lib/validate";
@@ -76,9 +76,6 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ error: error.message }, { status: 503 });
     }
     console.error("complaint failed:", error);
-    return Response.json(
-      { error: "The AI could not write the complaint right now. Please try again in a moment." },
-      { status: 502 },
-    );
+    return Response.json({ error: describeAiError(error) }, { status: 502 });
   }
 }

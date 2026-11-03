@@ -4,7 +4,7 @@
 // Input:  { analysis, history: [{ sellerSaid, tactic, reply }], sellerReply, image? }
 // Output: { analysis: ReplyAnalysis }
 
-import { AiConfigError, dataUrlToImage, generateJson, isMockMode, type ImageInput } from "@/lib/gemini";
+import { AiConfigError, dataUrlToImage, describeAiError, generateJson, isMockMode, type ImageInput } from "@/lib/gemini";
 import { buildReplyPrompt, replySchema } from "@/lib/prompts";
 import { cleanAnalysis, cleanReply } from "@/lib/validate";
 import { mockReply } from "@/lib/mockAi";
@@ -78,6 +78,6 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ error: error.message }, { status: 503 });
     }
     console.error("reply failed:", error);
-    return Response.json({ error: "The AI could not read the reply right now. Please try again." }, { status: 502 });
+    return Response.json({ error: describeAiError(error) }, { status: 502 });
   }
 }

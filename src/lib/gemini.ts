@@ -66,3 +66,22 @@ export function dataUrlToImage(dataUrl: string): ImageInput | null {
   }
   return { mimeType: match[1], base64: match[2] };
 }
+
+// Turns a Gemini API failure into a message that says what to fix.
+// Never includes the key itself.
+export function describeAiError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const status = typeof (error as { status?: unknown })?.status === "number" ? (error as { status: number }).status : 0;
+  const lower = message.toLowerCase();
+
+  if (lower.includes("api key not valid") || lower.includes("api_key_invalid") || status === 401 || status === 403) {
+    return "The Gemini API key was rejected. Check GEMINI_API_KEY in your hosting settings (it should be about 39 characters and start with AIza).";
+  }
+  if (status === 404 || lower.includes("not found")) {
+    return `The AI model "${modelName()}" is not available for this API key. Set GEMINI_MODEL to gemini-flash-latest and redeploy.`;
+  }
+  if (status === 429 || lower.includes("quota") || lower.includes("rate")) {
+    return "The AI is receiving too many requests right now (free-tier limit). Wait a minute and try again.";
+  }
+  return "The AI could not analyse this case right now. Please try again in a moment.";
+}

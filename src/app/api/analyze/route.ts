@@ -5,7 +5,7 @@
 //   {"type":"result","analysis":{...},"evidence":[...],"trace":[...]}
 //   {"type":"error","error":"..."}
 
-import { AiConfigError, isMockMode } from "@/lib/gemini";
+import { AiConfigError, describeAiError, isMockMode } from "@/lib/gemini";
 import { runCaseAgent } from "@/lib/agent";
 
 export const maxDuration = 60; // seconds; two AI calls with images can take a while
@@ -66,7 +66,7 @@ export async function POST(request: Request): Promise<Response> {
           send({ type: "error", error: error.message });
         } else {
           console.error("analyze failed:", error);
-          send({ type: "error", error: "The AI could not analyse this case right now. Please try again in a moment." });
+          send({ type: "error", error: describeAiError(error) });
         }
       }
       controller.close();

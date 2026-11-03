@@ -10,12 +10,70 @@ import { compressImage } from "@/lib/imageUtils";
 import { newCaseId, saveCase } from "@/lib/caseStore";
 import { todayIso } from "@/lib/deadline";
 import { FALSE_CASE_WARNING } from "@/lib/law";
-import type { Case, CaseAnalysis } from "@/lib/types";
+import AgentTrace from "@/components/AgentTrace";
+import type { Case, CaseAnalysis, EvidenceItem, TraceStep } from "@/lib/types";
 
 const MAX_IMAGES = 4;
 
 const STORY_PLACEHOLDER =
   "Example: Facebook page 'XYZ Fashion' theke 2,400 takar jacket order korsilam, bKash e advance dilam. Jacket chera ashse, size o vul. Message dile block kore dise.";
+
+interface StreamResult {
+  analysis?: CaseAnalysis;
+  evidence?: EvidenceItem[];
+  trace?: TraceStep[];
+  error?: string;
+}
+
+// Reads the NDJSON stream from /api/analyze line by line.
+async function readAgentStream(body: ReadableStream<Uint8Array>, onStep: (step: TraceStep) => void): Promise<StreamResult> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let result: StreamResult = { error: "The agent stopped before finishing. Try again." };
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) {
+      break;
+    }
+    buffer += decoder.decode(value, { stream: true });
+    let newline = buffer.indexOf("\n");
+    while (newline !== -1) {
+      const line = buffer.slice(0, newline).trim();
+      buffer = buffer.slice(newline + 1);
+      if (line !== "") {
+        const message = JSON.parse(line);
+        if (message.type === "step") {
+          onStep(message.step as TraceStep);
+        } else if (message.type === "result") {
+          result = { analysis: message.analysis, evidence: message.evidence, trace: message.trace };
+        } else if (message.type === "error") {
+          result = { error: message.error };
+        }
+      }
+      newline = buffer.indexOf("\n");
+    }
+  }
+  return result;
+}
+
+function upsertStep(steps: TraceStep[], step: TraceStep): TraceStep[] {
+  const updated: TraceStep[] = [];
+  let found = false;
+  for (const item of steps) {
+    if (item.id === step.id) {
+      updated.push(step);
+      found = true;
+    } else {
+      updated.push(item);
+    }
+  }
+  if (!found) {
+    updated.push(step);
+  }
+  return updated;
+}
 
 export default function NewCasePage() {
   const router = useRouter();
@@ -26,6 +84,8 @@ export default function NewCasePage() {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const [maxDate, setMaxDate] = useState("");
+  const [steps, setSteps] = useState<TraceStep[]>([]);
+  const [finished, setFinished] = useState(false);
 
   useEffect(() => {
     // "Today" must be read in the browser, not while the page is prerendered.
@@ -85,15 +145,27 @@ export default function NewCasePage() {
     }
 
     setWorking(true);
+    setSteps([]);
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ story: story, purchaseDate: purchaseDate, images: images }),
       });
-      const data = await response.json();
-      if (!response.ok) {
+
+      // Errors found before the agent starts come back as normal JSON.
+      if (!response.ok || response.body === null) {
+        const data = await response.json().catch(() => ({}));
         setError(data.error || "Something went wrong. Try again.");
+        setWorking(false);
+        return;
+      }
+
+      const result = await readAgentStream(response.body, (step) => {
+        setSteps((previous) => upsertStep(previous, step));
+      });
+      if (result.error) {
+        setError(result.error);
         setWorking(false);
         return;
       }
@@ -104,11 +176,14 @@ export default function NewCasePage() {
         story: story.trim(),
         purchaseDate: purchaseDate,
         images: images,
-        analysis: data.analysis as CaseAnalysis,
+        analysis: result.analysis as CaseAnalysis,
         status: "new",
         demandSentAt: "",
         complainant: null,
         complaint: null,
+        evidence: result.evidence || [],
+        trace: result.trace || [],
+        negotiation: [],
       };
       const saved = saveCase(newCase);
       if (!saved) {
@@ -116,7 +191,9 @@ export default function NewCasePage() {
         setWorking(false);
         return;
       }
-      router.push(`/case/${newCase.id}`);
+      setFinished(true);
+      // A short pause so the finished steps can be seen before the case opens.
+      setTimeout(() => router.push(`/case/${newCase.id}`), 1200);
     } catch {
       setError("Could not reach the server. Check your internet connection and try again.");
       setWorking(false);
@@ -130,7 +207,21 @@ export default function NewCasePage() {
         Tell Ovijog what happened, in your own words. The more evidence you add, the stronger your complaint.
       </p>
 
-      <form onSubmit={handleSubmit} className="file-cover mt-8 p-4 md:p-6">
+      {working && (
+        <section className="file-cover mt-8 p-4 md:p-6" aria-label="Ovijog is working on your case">
+          <div className="ledger rounded-sm p-5 md:p-7">
+            <h2 className="display text-2xl">{finished ? "Your case file is ready" : "Ovijog is working on your case"}</h2>
+            <p className="mt-1 text-sm text-ink-soft">
+              {finished ? "Opening it now." : "Steps marked AI are done by the model. Steps marked Code are checks the AI cannot change."}
+            </p>
+            <div className="mt-6">
+              {steps.length === 0 ? <p className="text-ink-soft">Starting…</p> : <AgentTrace steps={steps} />}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <form onSubmit={handleSubmit} className={"file-cover mt-8 p-4 md:p-6" + (working ? " hidden" : "")}>
         <div className="ledger space-y-7 rounded-sm p-5 md:p-7">
           <div>
             <label htmlFor="story" className="block text-lg font-semibold">
@@ -225,16 +316,20 @@ export default function NewCasePage() {
           </label>
 
           {error && (
-            <p role="alert" className="rounded border-l-4 border-red bg-white p-3 text-red">
-              {error}
-            </p>
+            <div role="alert" className="rounded border-l-4 border-red bg-white p-3">
+              <p className="text-red">{error}</p>
+              {steps.length > 0 && (
+                <div className="mt-3">
+                  <AgentTrace steps={steps} />
+                </div>
+              )}
+            </div>
           )}
 
           <div className="flex flex-wrap items-center gap-4">
             <button type="submit" className="btn btn-primary" disabled={working}>
               {working ? "Analysing your case…" : "Analyse my case"}
             </button>
-            {working && <span className="text-sm text-ink-soft">Reading your screenshots and matching the law. This takes about 15 seconds.</span>}
           </div>
         </div>
       </form>

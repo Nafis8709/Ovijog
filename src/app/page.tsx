@@ -9,7 +9,7 @@ const STEPS = [
   },
   {
     title: "Send the seller a demand",
-    body: "Ovijog reads your evidence, finds the section of the Act the seller broke, and writes a firm message asking for a refund within 3 days.",
+    body: "Watch Ovijog read your evidence and find the section of the Act the seller broke. It writes a firm refund demand, and if the seller replies with excuses, it tells you what they are doing and what to send back.",
   },
   {
     title: "File a formal complaint",
@@ -110,7 +110,8 @@ export default function HomePage() {
         <h2 className="display text-3xl">How Ovijog stays honest</h2>
         <ul className="mt-6 max-w-3xl list-disc space-y-3 pl-5 text-ink-soft">
           <li>The AI can only cite sections from a fixed list of the Act. The legal text you see always comes from that list, never from the AI.</li>
-          <li>The 30-day deadline is calculated by the app, not guessed by the AI.</li>
+          <li>You can see every step the agent took, marked AI or Code. The 30-day deadline and the evidence score are calculated by the app, not guessed by the AI.</li>
+          <li>Phone numbers and offices are never written by the AI. They come from a list checked by hand.</li>
           <li>Every fact in the timeline points to the screenshot or statement it came from. Missing facts are left blank and turned into questions for you.</li>
           <li>
             Section {FALSE_CASE_WARNING.section} of the Act punishes false or harassing complaints, so Ovijog reminds you

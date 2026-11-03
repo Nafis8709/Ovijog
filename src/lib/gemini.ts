@@ -21,6 +21,12 @@ function getClient(): GoogleGenAI {
   return new GoogleGenAI({ apiKey: apiKey });
 }
 
+// Offline demo / test mode: OVIJOG_MOCK=1 replaces every AI call with simple
+// rules (see mockAi.ts). Useful when there is no internet on stage, and for testing.
+export function isMockMode(): boolean {
+  return process.env.OVIJOG_MOCK === "1";
+}
+
 export function modelName(): string {
   return process.env.GEMINI_MODEL || DEFAULT_MODEL;
 }

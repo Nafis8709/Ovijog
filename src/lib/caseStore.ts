@@ -7,6 +7,20 @@ import type { Case } from "./types";
 
 const STORAGE_KEY = "ovijog.cases.v1";
 
+// Cases saved by an older version may lack newer fields; fill them in.
+function normalize(item: Case): Case {
+  return {
+    ...item,
+    images: Array.isArray(item.images) ? item.images : [],
+    evidence: Array.isArray(item.evidence) ? item.evidence : [],
+    trace: Array.isArray(item.trace) ? item.trace : [],
+    negotiation: Array.isArray(item.negotiation) ? item.negotiation : [],
+    complaint: item.complaint || null,
+    complainant: item.complainant || null,
+    demandSentAt: item.demandSentAt || "",
+  };
+}
+
 export function loadCases(): Case[] {
   try {
     const text = window.localStorage.getItem(STORAGE_KEY);
@@ -15,7 +29,11 @@ export function loadCases(): Case[] {
     }
     const parsed = JSON.parse(text);
     if (Array.isArray(parsed)) {
-      return parsed as Case[];
+      const cases: Case[] = [];
+      for (const item of parsed) {
+        cases.push(normalize(item as Case));
+      }
+      return cases;
     }
     return [];
   } catch {

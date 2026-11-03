@@ -3,12 +3,20 @@
 // Output: { complaint } — subject, body paragraphs, relief and evidence list in Bangla.
 // The letter header, address and signature are added by the letter page, not the AI.
 
-import { AiConfigError, generateJson } from "@/lib/gemini";
+import { AiConfigError, generateJson, isMockMode } from "@/lib/gemini";
+import { mockComplaint } from "@/lib/mockAi";
 import { buildComplaintPrompt, complaintSchema } from "@/lib/prompts";
 import { cleanAnalysis, cleanComplaint } from "@/lib/validate";
 
 export async function POST(request: Request): Promise<Response> {
-  let body: { story?: unknown; purchaseDate?: unknown; analysis?: unknown; demandSentAt?: unknown; imageCount?: unknown };
+  let body: {
+    story?: unknown;
+    purchaseDate?: unknown;
+    analysis?: unknown;
+    demandSentAt?: unknown;
+    imageCount?: unknown;
+    sellerResponses?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -29,6 +37,16 @@ export async function POST(request: Request): Promise<Response> {
   const demandSentAt = typeof body.demandSentAt === "string" ? body.demandSentAt : "";
   const imageCount = typeof body.imageCount === "number" ? body.imageCount : 0;
 
+  // Short summaries of how the seller replied during negotiation (from the Negotiator).
+  const responseLines: string[] = [];
+  if (Array.isArray(body.sellerResponses)) {
+    for (const item of body.sellerResponses.slice(0, 6)) {
+      if (typeof item === "string" && item.trim() !== "") {
+        responseLines.push("- " + item.trim().slice(0, 300));
+      }
+    }
+  }
+
   // Only the facts the letter needs (no demand messages).
   const caseForPrompt = {
     story: story,
@@ -46,8 +64,8 @@ export async function POST(request: Request): Promise<Response> {
   };
 
   try {
-    const prompt = buildComplaintPrompt(JSON.stringify(caseForPrompt, null, 2), demandSentAt);
-    const raw = await generateJson<unknown>(prompt, [], complaintSchema);
+    const prompt = buildComplaintPrompt(JSON.stringify(caseForPrompt, null, 2), demandSentAt, responseLines.join("\n"));
+    const raw = isMockMode() ? mockComplaint() : await generateJson<unknown>(prompt, [], complaintSchema);
     const complaint = cleanComplaint(raw);
     if (complaint.bodyParagraphsBn.length === 0) {
       throw new Error("Empty complaint body");

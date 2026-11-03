@@ -2,7 +2,17 @@
 // The model is helpful but not trusted: anything outside the rules is removed.
 
 import { allowedSectionNumbers } from "./law";
-import type { CaseAnalysis, ComplaintDraft, MatchedSection, TimelineEvent } from "./types";
+import type {
+  CaseAnalysis,
+  ComplaintDraft,
+  EvidenceItem,
+  EvidenceKind,
+  MatchedSection,
+  NextMove,
+  ReplyAnalysis,
+  SellerTactic,
+  TimelineEvent,
+} from "./types";
 
 const MAX_SECTIONS = 3;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -142,5 +152,93 @@ export function cleanComplaint(raw: any): ComplaintDraft {
     bodyParagraphsBn: cleanStringList(raw?.bodyParagraphsBn, 6, 1200),
     reliefBn: cleanText(raw?.reliefBn, 800),
     evidenceListBn: cleanStringList(raw?.evidenceListBn, 10, 200),
+  };
+}
+
+const EVIDENCE_KINDS: EvidenceKind[] = ["payment_proof", "order_proof", "chat", "product_photo", "other"];
+
+// One item per uploaded screenshot, in order, even if the AI skipped one.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function cleanEvidence(raw: any, imageCount: number): EvidenceItem[] {
+  const result: EvidenceItem[] = [];
+  const items = Array.isArray(raw?.items) ? raw.items : [];
+  for (let index = 0; index < imageCount; index++) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let found: any = null;
+    for (const item of items) {
+      if (Number(item?.index) === index) {
+        found = item;
+        break;
+      }
+    }
+    if (found === null) {
+      result.push({ index: index, kind: "other", summary: "Could not read this screenshot.", facts: [], readable: false });
+      continue;
+    }
+    let kind: EvidenceKind = "other";
+    if (EVIDENCE_KINDS.includes(found.kind)) {
+      kind = found.kind;
+    }
+    result.push({
+      index: index,
+      kind: kind,
+      summary: cleanText(found.summary, 200),
+      facts: cleanStringList(found.facts, 6, 120),
+      readable: found.readable !== false,
+    });
+  }
+  return result;
+}
+
+const TACTICS: SellerTactic[] = [
+  "refund_offered",
+  "replacement_offered",
+  "partial_offer",
+  "stalling",
+  "denial",
+  "blame_shifting",
+  "threat_or_abuse",
+  "asks_for_info",
+  "other",
+];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function cleanReply(raw: any, earlierTurns: number): ReplyAnalysis {
+  let tactic: SellerTactic = "other";
+  if (TACTICS.includes(raw?.tactic)) {
+    tactic = raw.tactic;
+  }
+
+  let nextMove: NextMove = "counter";
+  if (raw?.nextMove === "accept" || raw?.nextMove === "escalate") {
+    nextMove = raw.nextMove;
+  }
+
+  // Safety rules applied in code, whatever the AI said:
+  // 1. Threats or abuse: stop replying and escalate.
+  // 2. Denial: escalate.
+  // 3. A third round of excuses: escalate instead of replying forever.
+  const isExcuse = tactic === "stalling" || tactic === "blame_shifting" || tactic === "partial_offer";
+  if (tactic === "threat_or_abuse" || tactic === "denial") {
+    nextMove = "escalate";
+  } else if (isExcuse && earlierTurns >= 2) {
+    nextMove = "escalate";
+  }
+
+  let replyBn = cleanText(raw?.replyBn, 1200);
+  let replyEn = cleanText(raw?.replyEn, 1200);
+  if (tactic === "threat_or_abuse") {
+    replyBn = "";
+    replyEn = "";
+  }
+
+  return {
+    tactic: tactic,
+    tacticExplainEn: cleanText(raw?.tacticExplainEn, 400),
+    tacticExplainBn: cleanText(raw?.tacticExplainBn, 400),
+    nextMove: nextMove,
+    nextMoveReason: cleanText(raw?.nextMoveReason, 300),
+    replyBn: replyBn,
+    replyEn: replyEn,
   };
 }

@@ -28,6 +28,36 @@ export function buildDemoCase(): Case {
     demandSentAt: "",
     complainant: null,
     complaint: null,
+    evidence: [],
+    negotiation: [],
+    trace: [
+      { id: "read", label: "Reading your screenshots", by: "ai", status: "skipped", details: ["Sample case: no screenshots attached."] },
+      {
+        id: "understand",
+        label: "Understanding your case",
+        by: "ai",
+        status: "done",
+        details: [
+          "Seller: Winter Trend BD (demo)",
+          "Product: Leather jacket, size L",
+          "Amount: ৳2,400",
+          "Timeline: 4 events, each linked to its evidence",
+          "Drafted the demand message to the seller in Bangla and English",
+        ],
+      },
+      {
+        id: "law",
+        label: "Checking the law",
+        by: "code",
+        status: "done",
+        details: [
+          "Section 45: Not selling or delivering properly any goods or service promised (verified against the Act)",
+          "Section 44: Deceiving buyers by false advertisement (verified against the Act)",
+        ],
+      },
+      { id: "deadline", label: "Calculating your deadline", by: "code", status: "done", details: ["Counted from the delivery date (30 days, Section 60)"] },
+      { id: "score", label: "Scoring your evidence", by: "code", status: "done", details: ["Evidence strength: 30/100 (weak)", "Add screenshots to make it stronger"] },
+    ],
     analysis: {
       summary:
         "The buyer paid Tk 2,400 by bKash for an 'original leather' size L jacket from a Facebook page, received a torn rexine jacket in size M, and was blocked after asking for an exchange.",

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "not-delivered-bkash",
+    "story": "I ordered a smartwatch from a Facebook page called Gadget Point BD and paid 3,200 taka by bKash in advance. They said delivery in 3 days. It has been 18 days, nothing came, and now they don't answer calls.",
+    "consumer": true,
+    "expectAny": [45]
+  },
+  {
+    "id": "fake-original-perfume",
+    "story": "Instagram shop 'Scent House' advertised an original Dior Sauvage 100ml for 6,500 taka. I paid on delivery. The bottle is clearly a fake copy, the smell is gone in 10 minutes and the box has spelling mistakes.",
+    "consumer": true,
+    "expectAny": [44, 50]
+  },
+  {
+    "id": "expired-biscuits",
+    "story": "I bought two packets of biscuits from a grocery shop in Mirpur for 120 taka. At home I saw the expiry date was two months ago. The shopkeeper refused to take them back.",
+    "consumer": true,
+    "expectAny": [51]
+  },
+  {
+    "id": "above-mrp-medicine",
+    "story": "A pharmacy charged me 450 taka for a strip of medicine whose printed MRP is 320 taka. When I showed the MRP they said everyone charges extra now.",
+    "consumer": true,
+    "expectAny": [40]
+  },
+  {
+    "id": "wrong-size-no-exchange",
+    "story": "Ordered a size 42 shirt from an online page for 1,150 taka by Nagad. They sent size 38. The page promised free exchange but now says exchange is not possible and blocked me.",
+    "consumer": true,
+    "expectAny": [45, 44]
+  },
+  {
+    "id": "courier-lost-parcel",
+    "story": "I paid a courier service 150 taka to deliver a laptop charger worth 2,800 taka to my brother in Rajshahi. The courier says the parcel is lost and will not pay anything.",
+    "consumer": true,
+    "expectAny": [53, 45]
+  },
+  {
+    "id": "short-weight-rice",
+    "story": "I bought 10 kg of rice for 780 taka from a shop. At home it weighed only 9 kg on my scale. I went back and the shopkeeper shouted at me.",
+    "consumer": true,
+    "expectAny": [46]
+  },
+  {
+    "id": "banglish-soap-in-box",
+    "story": "Online page theke 18,000 taka diye ekta phone order korsilam, cash on delivery. Box khule dekhi vitore phone nai, ekta saban ar pathor. Page e message dile reply dey na.",
+    "consumer": true,
+    "expectAny": [45]
+  },
+  {
+    "id": "bangla-shoes-not-delivered",
+    "story": "অনলাইনে একটি পেজ থেকে ৩৫০০ টাকার জুতা অর্ডার করে বিকাশে অগ্রিম টাকা দিয়েছি। ১৫ দিন হয়ে গেল, ডেলিভারি দেয়নি, ফোনও ধরে না।",
+    "consumer": true,
+    "expectAny": [45]
+  },
+  {
+    "id": "personal-loan",
+    "story": "I lent my friend 5,000 taka last month for his tuition fee. He promised to return it in two weeks but now he is avoiding me and won't pick up my calls.",
+    "consumer": false,
+    "expectAny": []
+  },
+  {
+    "id": "hacked-account",
+    "story": "Someone hacked my Facebook account yesterday and is sending messages to my friends asking for money on bKash. I cannot log in anymore.",
+    "consumer": false,
+    "expectAny": []
+  }
+]

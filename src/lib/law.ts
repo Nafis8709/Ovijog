@@ -177,9 +177,9 @@ export const PROCEDURE = {
 };
 
 // Ministry of Commerce, Digital Commerce Operation Guidelines 2021
-// (summary reported by The Daily Star). Used only as supporting context.
+// (summaries reported by The Daily Star). Used only as supporting context.
 export const DIGITAL_COMMERCE_RULE =
-  "Digital Commerce Operation Guidelines 2021: for prepaid orders, the product must be handed to delivery within 48 hours and delivered within 5 days in the same city, or within 10 days elsewhere.";
+  "Digital Commerce Operation Guidelines 2021: if the full price is paid, the product must be delivered within 5 days in the same city or within 10 days elsewhere; if the seller cannot supply it, the buyer must be told within 48 hours and fully refunded within the next 72 hours; consumer complaints must be recorded and addressed within 72 hours.";
 
 export function findSection(sectionNumber: number): LawSection | undefined {
   for (const item of CRPA_OFFENCES) {

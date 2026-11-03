@@ -13,6 +13,13 @@ import type { Case, Complainant } from "@/lib/types";
 import DeadlineStamp from "@/components/DeadlineStamp";
 import StatusSteps from "@/components/StatusSteps";
 import CopyButton from "@/components/CopyButton";
+import AgentTrace from "@/components/AgentTrace";
+import EvidenceMeter from "@/components/EvidenceMeter";
+import Negotiator from "@/components/Negotiator";
+import EscalationRoutes from "@/components/EscalationRoutes";
+import { scoreEvidence } from "@/lib/evidence";
+import { escalationRoutes } from "@/lib/escalation";
+import { downloadDeadline } from "@/lib/calendar";
 
 const EMPTY_COMPLAINANT: Complainant = { name: "", phone: "", email: "", address: "" };
 
@@ -67,6 +74,7 @@ export default function CaseView() {
           analysis: item.analysis,
           demandSentAt: item.demandSentAt,
           imageCount: item.images.length,
+          sellerResponses: item.negotiation.map((turn) => `${turn.analysis.tactic}: ${turn.sellerSaid}`),
         }),
       });
       const data = await response.json();
@@ -117,6 +125,8 @@ export default function CaseView() {
   const deadline = computeDeadline(analysis.incidentDate, item.purchaseDate);
   const demandMessage = messageLanguage === "bn" ? analysis.demandMessageBn : analysis.demandMessageEn;
   const canAct = analysis.isConsumerCase && analysis.matchedSections.length > 0;
+  const evidenceScore = scoreEvidence(item);
+  const routes = escalationRoutes(analysis);
 
   return (
     <div className="mx-auto max-w-4xl space-y-10 px-4 py-10">
@@ -143,11 +153,33 @@ export default function CaseView() {
               </dd>
             </dl>
           </div>
-          <DeadlineStamp deadline={deadline} animate={true} />
+          <div className="flex flex-col items-start gap-3">
+            <DeadlineStamp deadline={deadline} animate={true} />
+            {deadline.known && !deadline.expired && item.status !== "resolved" && (
+              <button
+                type="button"
+                className="text-sm font-semibold text-stamp underline underline-offset-4"
+                onClick={() => downloadDeadline(deadline.lastDate, analysis.productOrService || "your case")}
+              >
+                Add deadline to my calendar
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
       <StatusSteps status={item.status} />
+
+      {item.trace.length > 0 && (
+        <details className="rounded border border-paper-line bg-white p-4">
+          <summary className="cursor-pointer font-semibold">How Ovijog reached this</summary>
+          <div className="mt-4">
+            <AgentTrace steps={item.trace} />
+          </div>
+        </details>
+      )}
+
+      {analysis.isConsumerCase && <EvidenceMeter score={evidenceScore} />}
 
       {!analysis.isConsumerCase && (
         <section className="rounded border-l-4 border-red bg-white p-5">
@@ -283,6 +315,8 @@ export default function CaseView() {
               </div>
             </div>
           )}
+
+          {item.status !== "new" && <Negotiator item={item} onUpdate={update} />}
         </section>
       )}
 
@@ -357,6 +391,8 @@ export default function CaseView() {
         </section>
       )}
 
+      {item.status !== "resolved" && <EscalationRoutes routes={routes} />}
+
       {/* Evidence */}
       {item.images.length > 0 && (
         <section>
@@ -366,7 +402,19 @@ export default function CaseView() {
               <li key={index}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={image} alt={`Screenshot ${index + 1}`} className="w-full rounded border border-ink-soft" />
-                <p className="mt-1 text-sm text-ink-soft">Screenshot {index + 1}</p>
+                <p className="mt-1 text-sm font-semibold">Screenshot {index + 1}</p>
+                {item.evidence[index] && (
+                  <div className="text-sm text-ink-soft">
+                    <p>{item.evidence[index].summary}</p>
+                    {item.evidence[index].facts.length > 0 && (
+                      <ul className="mt-1 list-disc pl-4">
+                        {item.evidence[index].facts.map((fact) => (
+                          <li key={fact}>{fact}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

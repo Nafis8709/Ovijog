@@ -61,6 +61,69 @@ export interface Case {
   demandSentAt: string; // ISO timestamp or ""
   complainant: Complainant | null;
   complaint: ComplaintDraft | null; // stage 2 letter, null until generated
+  evidence: EvidenceItem[]; // what the agent found in each screenshot
+  trace: TraceStep[]; // the agent's steps, shown as "How Ovijog reached this"
+  negotiation: NegotiationTurn[]; // seller replies and Ovijog's suggested answers
+}
+
+// ---------- Evidence (agent step 1) ----------
+
+export type EvidenceKind =
+  | "payment_proof" // bKash / Nagad SMS, bank or card receipt
+  | "order_proof" // order page, invoice, product post or advertisement
+  | "chat" // conversation with the seller
+  | "product_photo" // photo of what was received
+  | "other";
+
+export interface EvidenceItem {
+  index: number; // 0-based screenshot number
+  kind: EvidenceKind;
+  summary: string; // one line: what this screenshot shows
+  facts: string[]; // short facts read from the image
+  readable: boolean; // false if blurry or unrelated
+}
+
+// ---------- Agent trace (shown live while the agent works) ----------
+
+export type StepStatus = "running" | "done" | "skipped" | "failed";
+
+export interface TraceStep {
+  id: string;
+  label: string;
+  by: "ai" | "code"; // honest label: was this step done by the AI or by plain code?
+  status: StepStatus;
+  details: string[];
+}
+
+// ---------- Negotiation (Stage 1.5) ----------
+
+export type SellerTactic =
+  | "refund_offered"
+  | "replacement_offered"
+  | "partial_offer"
+  | "stalling"
+  | "denial"
+  | "blame_shifting"
+  | "threat_or_abuse"
+  | "asks_for_info"
+  | "other";
+
+export type NextMove = "accept" | "counter" | "escalate";
+
+export interface ReplyAnalysis {
+  tactic: SellerTactic;
+  tacticExplainEn: string;
+  tacticExplainBn: string;
+  nextMove: NextMove;
+  nextMoveReason: string;
+  replyBn: string; // empty when the advice is to stop replying
+  replyEn: string;
+}
+
+export interface NegotiationTurn {
+  at: string; // ISO timestamp
+  sellerSaid: string; // text the user pasted (or "[screenshot]")
+  analysis: ReplyAnalysis;
 }
 
 // Stage 2: the AI writes these parts; the app adds header, address and signature.

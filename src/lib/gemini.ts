@@ -83,5 +83,7 @@ export function describeAiError(error: unknown): string {
   if (status === 429 || lower.includes("quota") || lower.includes("rate")) {
     return "The AI is receiving too many requests right now (free-tier limit). Wait a minute and try again.";
   }
-  return "The AI could not analyse this case right now. Please try again in a moment.";
+  // Short, key-free hint for whoever runs the app (helps diagnose hosting problems).
+  const hint = message.replace(/AIza[0-9A-Za-z_-]+/g, "[key]").replace(/\s+/g, " ").slice(0, 220);
+  return `The AI could not analyse this case right now. Please try again in a moment. (Details: ${status || "no status"} ${hint})`;
 }

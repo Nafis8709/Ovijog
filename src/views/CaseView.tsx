@@ -74,6 +74,7 @@ export default function CaseView() {
           analysis: item.analysis,
           demandSentAt: item.demandSentAt,
           imageCount: item.images.length,
+          evidenceSummaries: item.images.map((_, index) => (item.evidence[index] ? item.evidence[index].summary : "")),
           sellerResponses: item.negotiation.map((turn) => `${turn.analysis.tactic}: ${turn.sellerSaid}`),
         }),
       });

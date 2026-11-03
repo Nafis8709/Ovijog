@@ -159,14 +159,20 @@ export const analysisSchema = {
 
 // ---------- Step 2: formal complaint letter ----------
 
-export function buildComplaintPrompt(caseJson: string, demandSentAt: string, sellerResponsesText: string): string {
+export function buildComplaintPrompt(
+  caseJson: string,
+  demandSentAt: string,
+  sellerResponsesText: string,
+  availableEvidence: string[],
+): string {
+  const evidenceLines = availableEvidence.map((item, index) => `${index + 1}. ${item}`).join("\n");
   return `You are Ovijog. Write the body of a formal written complaint in standard formal Bangla (চলিত ভাষা; do not mix সাধু and চলিত) addressed to the Director General, Directorate of National Consumer Rights Protection (DNCRP), under the Consumers' Right Protection Act, 2009.
 
 The app will add the date, the address block, the complainant's name, address, phone and signature itself. You write ONLY:
 - subjectBn: one line subject, starting with "বিষয়:".
 - bodyParagraphsBn: 3 to 5 short paragraphs that state, in order: who the complainant is (use "আমি" — do not write their name), what was bought from whom, when and for how much, what went wrong, what the complainant did to resolve it with the seller${demandSentAt ? ` (a written demand was sent to the seller on ${demandSentAt.slice(0, 10)} and the issue was not resolved)` : ""}, ${sellerResponsesText ? ` what the seller replied (summarised below), ` : ""}and which section(s) of the Act were violated.
 - reliefBn: one paragraph asking for a refund of the amount paid and lawful action against the seller.
-- evidenceListBn: a numbered list of the evidence available (one item per screenshot or fact), each item under 15 words.
+- evidenceListBn: translate each item of AVAILABLE EVIDENCE below into short Bangla (under 15 words each), in the same order, exactly one entry per item, without numbers. If AVAILABLE EVIDENCE is empty, return an empty list. Never add evidence that is not listed.
 
 RULES
 - Use ONLY the facts in the case data below. Do not add facts, amounts, dates or names that are not there.
@@ -176,6 +182,9 @@ RULES
 
 CASE DATA (JSON):
 ${caseJson}
+
+AVAILABLE EVIDENCE (${availableEvidence.length} item(s); these are the only attachments that exist):
+${evidenceLines || "(none)"}
 ${sellerResponsesText ? `
 HOW THE SELLER RESPONDED TO THE BUYER'S DEMAND (oldest first):
 ${sellerResponsesText}` : ""}`;

@@ -18,6 +18,7 @@ export async function POST(request: Request): Promise<Response> {
     demandSentAt?: unknown;
     imageCount?: unknown;
     sellerResponses?: unknown;
+    evidenceSummaries?: unknown;
   };
   try {
     body = await request.json();
@@ -49,6 +50,22 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  // The only attachments that exist: one per screenshot, plus Ovijog's own records.
+  const availableEvidence: string[] = [];
+  if (Array.isArray(body.evidenceSummaries)) {
+    const summaries = body.evidenceSummaries.slice(0, Math.min(imageCount, 4));
+    for (let i = 0; i < summaries.length; i++) {
+      const summary = typeof summaries[i] === "string" && summaries[i].trim() !== "" ? summaries[i].trim().slice(0, 160) : "screenshot";
+      availableEvidence.push(`Screenshot ${i + 1}: ${summary}`);
+    }
+  }
+  if (demandSentAt) {
+    availableEvidence.push(`Copy of the written demand sent to the seller on ${demandSentAt.slice(0, 10)}`);
+  }
+  if (responseLines.length > 0) {
+    availableEvidence.push(`Record of the seller's ${responseLines.length} reply/replies`);
+  }
+
   // Only the facts the letter needs (no demand messages).
   const caseForPrompt = {
     story: story,
@@ -66,9 +83,9 @@ export async function POST(request: Request): Promise<Response> {
   };
 
   try {
-    const prompt = buildComplaintPrompt(JSON.stringify(caseForPrompt, null, 2), demandSentAt, responseLines.join("\n"));
+    const prompt = buildComplaintPrompt(JSON.stringify(caseForPrompt, null, 2), demandSentAt, responseLines.join("\n"), availableEvidence);
     const raw = isMockMode() ? mockComplaint() : await generateJson<unknown>(prompt, [], complaintSchema);
-    const complaint = cleanComplaint(raw);
+    const complaint = cleanComplaint(raw, availableEvidence.length);
     if (complaint.bodyParagraphsBn.length === 0) {
       throw new Error("Empty complaint body");
     }

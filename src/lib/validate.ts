@@ -146,12 +146,21 @@ export function cleanAnalysis(raw: any): CaseAnalysis {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function cleanComplaint(raw: any): ComplaintDraft {
+export function cleanComplaint(raw: any, availableEvidenceCount: number): ComplaintDraft {
+  // The letter numbers the attachments itself, so remove any "১." or "1)" the AI added,
+  // and never list more attachments than actually exist.
+  const evidence: string[] = [];
+  for (const item of cleanStringList(raw?.evidenceListBn, availableEvidenceCount, 200)) {
+    const withoutNumber = item.replace(/^\s*[0-9০-৯]+\s*[.)।:-]\s*/, "").trim();
+    if (withoutNumber !== "") {
+      evidence.push(withoutNumber);
+    }
+  }
   return {
     subjectBn: cleanText(raw?.subjectBn, 300),
     bodyParagraphsBn: cleanStringList(raw?.bodyParagraphsBn, 6, 1200),
     reliefBn: cleanText(raw?.reliefBn, 800),
-    evidenceListBn: cleanStringList(raw?.evidenceListBn, 10, 200),
+    evidenceListBn: evidence,
   };
 }
 

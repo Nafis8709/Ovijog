@@ -96,11 +96,14 @@ export default function LetterView() {
     `&body=${encodeURIComponent(fullText)}`;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="no-print mb-6 flex flex-wrap items-center gap-3">
-        <Link href={`/case/${item.id}`} className="btn btn-quiet py-2">
-          Back to the case
-        </Link>
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
+      <Link
+        href={`/case/${item.id}`}
+        className="no-print mb-3 inline-flex min-h-11 items-center font-semibold text-green underline-offset-4 hover:underline"
+      >
+        ← Back to the case
+      </Link>
+      <div className="no-print mb-6 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-center">
         <button type="button" className="btn btn-primary py-2" onClick={() => window.print()}>
           Print or save as PDF
         </button>
@@ -114,7 +117,7 @@ export default function LetterView() {
         copy if you submit it in person.
       </p>
 
-      <article className="letter rounded border border-paper-line p-8 shadow-[6px_6px_0_var(--ink)] md:p-12">
+      <article className="letter rounded border border-paper-line p-5 shadow-[4px_4px_0_var(--ink)] sm:p-8 md:p-12 md:shadow-[6px_6px_0_var(--ink)]">
         <p className="text-right">তারিখ: {dateText}</p>
 
         <div className="mt-6">
@@ -128,11 +131,11 @@ export default function LetterView() {
 
         <p className="mt-6">জনাব,</p>
         {complaint.bodyParagraphsBn.map((paragraph, index) => (
-          <p key={index} className="mt-3 text-justify">
+          <p key={index} className="mt-3 sm:text-justify">
             {paragraph}
           </p>
         ))}
-        <p className="mt-3 text-justify">{complaint.reliefBn}</p>
+        <p className="mt-3 sm:text-justify">{complaint.reliefBn}</p>
 
         <p className="mt-6">আমি এই মর্মে ঘোষণা করছি যে, উপরে বর্ণিত সকল তথ্য আমার জানা মতে সত্য।</p>
 

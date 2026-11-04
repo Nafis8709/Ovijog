@@ -17,6 +17,8 @@ import AgentTrace from "@/components/AgentTrace";
 import EvidenceMeter from "@/components/EvidenceMeter";
 import Negotiator from "@/components/Negotiator";
 import EscalationRoutes from "@/components/EscalationRoutes";
+import NextStep from "@/components/NextStep";
+import AddEvidence from "@/components/AddEvidence";
 import { scoreEvidence } from "@/lib/evidence";
 import { escalationRoutes } from "@/lib/escalation";
 import { downloadDeadline } from "@/lib/calendar";
@@ -130,36 +132,36 @@ export default function CaseView() {
   const routes = escalationRoutes(analysis);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-10 px-4 py-10">
+    <div className="mx-auto max-w-4xl space-y-8 px-4 py-6 sm:space-y-10 sm:py-10">
       {/* File cover: what, who, how much, and the deadline stamp */}
-      <section className="file-cover p-4 shadow-[6px_6px_0_var(--ink)] md:p-6">
-        <div className="ledger flex flex-wrap items-start justify-between gap-6 rounded-sm p-5 md:p-7">
-          <div className="max-w-xl">
+      <section className="file-cover p-2 shadow-[4px_4px_0_var(--ink)] sm:p-4 md:p-6 md:shadow-[6px_6px_0_var(--ink)]">
+        <div className="sheet flex flex-wrap items-start justify-between gap-6 rounded-sm p-4 sm:p-5 md:flex-nowrap md:p-7">
+          <div className="min-w-0 max-w-xl md:flex-1">
             <p className="text-sm text-ink-soft">Case opened {formatDate(item.createdAt.slice(0, 10))}</p>
-            <h1 className="display mt-1 text-3xl md:text-4xl">
+            <h1 className="display mt-1 text-3xl break-words md:text-4xl">
               {analysis.productOrService || "Your case"}
               {analysis.amountPaid !== null && <span className="text-green">, {formatTaka(analysis.amountPaid)}</span>}
             </h1>
-            <p className="mt-3 text-lg">{analysis.summary}</p>
+            <p className="mt-3 sm:text-lg">{analysis.summary}</p>
             <p className="mt-2 text-ink-soft">{analysis.summaryBn}</p>
             <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
               <dt className="text-ink-soft">Seller</dt>
-              <dd>{analysis.sellerName || "Not found in evidence"}</dd>
+              <dd className="break-words">{analysis.sellerName || "Not found yet"}</dd>
               <dt className="text-ink-soft">Contact</dt>
-              <dd className="break-all">{analysis.sellerContact || "Not found in evidence"}</dd>
+              <dd className="break-all">{analysis.sellerContact || "Not found yet"}</dd>
               <dt className="text-ink-soft">Payment</dt>
-              <dd>
+              <dd className="break-words">
                 {analysis.paymentMethod || "Unknown"}
                 {analysis.transactionId && `, TrxID ${analysis.transactionId}`}
               </dd>
             </dl>
           </div>
-          <div className="flex flex-col items-start gap-3">
+          <div className="flex shrink-0 flex-col items-start gap-3">
             <DeadlineStamp deadline={deadline} animate={true} />
             {deadline.known && !deadline.expired && item.status !== "resolved" && (
               <button
                 type="button"
-                className="text-sm font-semibold text-stamp underline underline-offset-4"
+                className="btn btn-quiet py-1.5 text-sm"
                 onClick={() => downloadDeadline(deadline.lastDate, analysis.productOrService || "your case")}
               >
                 Add deadline to my calendar
@@ -169,21 +171,13 @@ export default function CaseView() {
         </div>
       </section>
 
+      {/* One clear action, so nobody has to scroll to find what to do */}
+      <NextStep item={item} deadline={deadline} score={evidenceScore} canAct={canAct} />
+
       <StatusSteps status={item.status} />
 
-      {item.trace.length > 0 && (
-        <details className="rounded border border-paper-line bg-white p-4">
-          <summary className="cursor-pointer font-semibold">How Ovijog built this case</summary>
-          <div className="mt-4">
-            <AgentTrace steps={item.trace} />
-          </div>
-        </details>
-      )}
-
-      {analysis.isConsumerCase && <EvidenceMeter score={evidenceScore} />}
-
       {!analysis.isConsumerCase && (
-        <section className="rounded border-l-4 border-red bg-white p-5">
+        <section className="rounded border-l-4 border-red bg-white p-4 sm:p-5">
           <h2 className="text-xl font-semibold">This may not be a consumer-rights case</h2>
           <p className="mt-2 text-ink-soft">{analysis.notConsumerReason}</p>
           <p className="mt-2 text-ink-soft">
@@ -193,76 +187,9 @@ export default function CaseView() {
         </section>
       )}
 
-      {/* Strengthen the case */}
-      {analysis.missingInfo.length > 0 && (
-        <section>
-          <h2 className="display text-2xl">Make your case stronger</h2>
-          <p className="mt-1 text-sm text-ink-soft">
-            Answering these will make your complaint harder to dismiss.
-          </p>
-          <ul className="mt-3 list-disc space-y-1 pl-5">
-            {analysis.missingInfo.map((question) => (
-              <li key={question}>{question}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Timeline: every event points to its evidence */}
-      {analysis.timeline.length > 0 && (
-        <section>
-          <h2 className="display text-2xl">What happened, in order</h2>
-          <ol className="mt-4 border-l-2 border-ink">
-            {analysis.timeline.map((event, index) => (
-              <li key={index} className="relative pb-5 pl-6">
-                <span className="absolute -left-[7px] top-2 h-3 w-3 rounded-full bg-ink" />
-                <p className="text-sm font-semibold text-ink-soft">{event.date ? formatDate(event.date) : "Date unknown"}</p>
-                <p>{event.event}</p>
-                <p className="text-sm text-stamp">Evidence: {event.evidence || "none"}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
-
-      {/* The law: section text always from our verified list */}
-      {analysis.matchedSections.length > 0 && (
-        <section>
-          <h2 className="display text-2xl">The law the seller broke</h2>
-          <p className="mt-1 text-sm text-ink-soft">From the Consumers&apos; Right Protection Act, 2009.</p>
-          <div className="mt-4 space-y-5">
-            {analysis.matchedSections.map((match) => {
-              const law = findSection(match.section);
-              if (!law) {
-                return null;
-              }
-              return (
-                <article key={match.section} className="rounded border-2 border-ink bg-white p-5">
-                  <h3 className="text-xl font-semibold">
-                    Section {law.section}: {law.titleEn}
-                  </h3>
-                  <p className="text-ink-soft">{law.titleBn}</p>
-                  <p className="mt-3">
-                    <span className="font-semibold">Why it applies: </span>
-                    {match.reason}
-                  </p>
-                  <p className="mt-1 text-ink-soft">{match.reasonBn}</p>
-                  <blockquote className="mt-4 border-l-4 border-stamp pl-4 text-sm text-ink-soft">
-                    {law.textEn}
-                  </blockquote>
-                  <p className="mt-2 text-sm">
-                    Maximum penalty: <strong>{law.maxPenalty}</strong>
-                  </p>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
       {/* Stage 1 */}
       {canAct && (
-        <section className="rounded border-2 border-green bg-white p-5 md:p-7">
+        <section id="stage-1" className="rounded border-2 border-green bg-white p-4 sm:p-5 md:p-7">
           <h2 className="display text-2xl text-green">Stage 1: send this to the seller</h2>
           <p className="mt-1 text-ink-soft">
             Send it by Messenger, WhatsApp or SMS, or show it at the shop. Many sellers fix the problem once they see the law and a deadline.
@@ -287,8 +214,8 @@ export default function CaseView() {
               English
             </button>
           </div>
-          <p className="ledger mt-4 whitespace-pre-wrap rounded border border-paper-line p-4 leading-8">{demandMessage}</p>
-          <div className="mt-4 flex flex-wrap gap-3">
+          <p className="ledger mt-4 whitespace-pre-wrap break-words rounded border border-paper-line p-3 leading-8 sm:p-4">{demandMessage}</p>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <CopyButton text={demandMessage} label="Copy message" />
             {item.status === "new" && (
               <button
@@ -306,7 +233,7 @@ export default function CaseView() {
               <p>
                 Sent on {formatDate(item.demandSentAt.slice(0, 10))}. Give the seller 3 days. What happened?
               </p>
-              <div className="mt-3 flex flex-wrap gap-3">
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <button type="button" className="btn btn-quiet" onClick={() => update({ status: "resolved" })}>
                   Seller fixed it
                 </button>
@@ -323,7 +250,7 @@ export default function CaseView() {
 
       {/* Stage 2 */}
       {canAct && item.status !== "resolved" && (
-        <section id="stage-2" className="rounded border-2 border-stamp bg-white p-5 md:p-7">
+        <section id="stage-2" className="rounded border-2 border-stamp bg-white p-4 sm:p-5 md:p-7">
           <h2 className="display text-2xl text-stamp">Stage 2: formal complaint</h2>
           <p className="mt-1 text-ink-soft">
             A written complaint to the Director General, Directorate of National Consumer Rights Protection. Your
@@ -338,7 +265,7 @@ export default function CaseView() {
           )}
 
           {item.complaint !== null ? (
-            <div className="mt-5 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link href={`/case/${item.id}/letter`} className="btn btn-primary">
                 Open the complaint letter
               </Link>
@@ -352,19 +279,43 @@ export default function CaseView() {
             <form onSubmit={draftComplaint} className="mt-5 grid gap-4 md:grid-cols-2">
               <label className="block">
                 <span className="text-sm font-semibold">Full name</span>
-                <input className="field mt-1" value={complainant.name} onChange={(e) => setComplainant({ ...complainant, name: e.target.value })} />
+                <input
+                  className="field mt-1"
+                  autoComplete="name"
+                  value={complainant.name}
+                  onChange={(e) => setComplainant({ ...complainant, name: e.target.value })}
+                />
               </label>
               <label className="block">
                 <span className="text-sm font-semibold">Mobile number</span>
-                <input className="field mt-1" inputMode="tel" value={complainant.phone} onChange={(e) => setComplainant({ ...complainant, phone: e.target.value })} />
+                <input
+                  className="field mt-1"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="01XXXXXXXXX"
+                  value={complainant.phone}
+                  onChange={(e) => setComplainant({ ...complainant, phone: e.target.value })}
+                />
               </label>
               <label className="block">
                 <span className="text-sm font-semibold">Email (optional)</span>
-                <input className="field mt-1" type="email" value={complainant.email} onChange={(e) => setComplainant({ ...complainant, email: e.target.value })} />
+                <input
+                  className="field mt-1"
+                  type="email"
+                  autoComplete="email"
+                  value={complainant.email}
+                  onChange={(e) => setComplainant({ ...complainant, email: e.target.value })}
+                />
               </label>
               <label className="block md:col-span-2">
                 <span className="text-sm font-semibold">Address</span>
-                <textarea className="field mt-1 min-h-20" value={complainant.address} onChange={(e) => setComplainant({ ...complainant, address: e.target.value })} />
+                <textarea
+                  className="field mt-1 min-h-20"
+                  autoComplete="street-address"
+                  value={complainant.address}
+                  onChange={(e) => setComplainant({ ...complainant, address: e.target.value })}
+                />
               </label>
               {error && (
                 <p role="alert" className="text-red md:col-span-2">
@@ -372,60 +323,137 @@ export default function CaseView() {
                 </p>
               )}
               <div className="md:col-span-2">
-                <button type="submit" className="btn btn-primary" disabled={drafting}>
+                <button type="submit" className="btn btn-primary w-full sm:w-auto" disabled={drafting}>
                   {drafting ? "Drafting the complaint…" : "Draft my complaint"}
                 </button>
               </div>
             </form>
           )}
 
-          <div className="mt-6 border-t border-paper-line pt-5 text-sm text-ink-soft">
-            <p className="font-semibold text-ink">Where to file</p>
-            <p>
-              Online at {PROCEDURE.website}, by email to {PROCEDURE.email}, or in person at the directorate&apos;s
-              office. Questions: hotline {PROCEDURE.hotline}.
-            </p>
-            <p className="mt-1">
-              If the seller is fined, {PROCEDURE.rewardPercent}% of the collected fine is paid to you ({PROCEDURE.rewardSection}).
-            </p>
+          <p className="mt-6 border-t border-paper-line pt-5 text-sm text-ink-soft">
+            If the seller is fined, {PROCEDURE.rewardPercent}% of the collected fine is paid to you ({PROCEDURE.rewardSection}).
+          </p>
+        </section>
+      )}
+
+      {item.status !== "resolved" && (
+        <div id="where">
+          <EscalationRoutes routes={routes} />
+        </div>
+      )}
+
+      {/* Proof: strength, what is missing, the photos, and adding more */}
+      {analysis.isConsumerCase && (
+        <section id="evidence" className="space-y-6">
+          <EvidenceMeter score={evidenceScore} />
+
+          {analysis.missingInfo.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold">Questions that would make your case stronger</h3>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-soft">
+                {analysis.missingInfo.map((question) => (
+                  <li key={question}>{question}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {item.images.length > 0 && (
+            <ul className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {item.images.map((image, index) => (
+                <li key={index} className="min-w-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={image} alt={`Photo ${index + 1}`} className="w-full rounded border border-ink-soft" />
+                  <p className="mt-1 text-sm font-semibold">Photo {index + 1}</p>
+                  {item.evidence[index] && (
+                    <div className="break-words text-sm text-ink-soft">
+                      <p>{item.evidence[index].summary}</p>
+                      {item.evidence[index].facts.length > 0 && (
+                        <ul className="mt-1 list-disc pl-4">
+                          {item.evidence[index].facts.map((fact) => (
+                            <li key={fact}>{fact}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {item.status !== "resolved" && <AddEvidence item={item} onUpdate={update} />}
+        </section>
+      )}
+
+      {/* The law: section text always from our verified list */}
+      {analysis.matchedSections.length > 0 && (
+        <section>
+          <h2 className="display text-2xl">The law the seller broke</h2>
+          <p className="mt-1 text-sm text-ink-soft">From the Consumers&apos; Right Protection Act, 2009.</p>
+          <div className="mt-4 space-y-4">
+            {analysis.matchedSections.map((match) => {
+              const law = findSection(match.section);
+              if (!law) {
+                return null;
+              }
+              return (
+                <article key={match.section} className="rounded border-2 border-ink bg-white p-4 sm:p-5">
+                  <h3 className="text-lg font-semibold sm:text-xl">
+                    Section {law.section}: {law.titleEn}
+                  </h3>
+                  <p className="text-ink-soft">{law.titleBn}</p>
+                  <p className="mt-3">
+                    <span className="font-semibold">Why it applies: </span>
+                    {match.reason}
+                  </p>
+                  <p className="mt-1 text-ink-soft">{match.reasonBn}</p>
+                  <p className="mt-2 text-sm">
+                    Maximum penalty: <strong>{law.maxPenalty}</strong>
+                  </p>
+                  <details className="mt-2">
+                    <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-stamp">
+                      Read the exact text of the law
+                    </summary>
+                    <blockquote className="mt-1 border-l-4 border-stamp pl-4 text-sm text-ink-soft">{law.textEn}</blockquote>
+                  </details>
+                </article>
+              );
+            })}
           </div>
         </section>
       )}
 
-      {item.status !== "resolved" && <EscalationRoutes routes={routes} />}
-
-      {/* Evidence */}
-      {item.images.length > 0 && (
+      {/* Timeline: every event points to its evidence */}
+      {analysis.timeline.length > 0 && (
         <section>
-          <h2 className="display text-2xl">Evidence</h2>
-          <ul className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-            {item.images.map((image, index) => (
-              <li key={index}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={image} alt={`Screenshot ${index + 1}`} className="w-full rounded border border-ink-soft" />
-                <p className="mt-1 text-sm font-semibold">Screenshot {index + 1}</p>
-                {item.evidence[index] && (
-                  <div className="text-sm text-ink-soft">
-                    <p>{item.evidence[index].summary}</p>
-                    {item.evidence[index].facts.length > 0 && (
-                      <ul className="mt-1 list-disc pl-4">
-                        {item.evidence[index].facts.map((fact) => (
-                          <li key={fact}>{fact}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
+          <h2 className="display text-2xl">What happened, in order</h2>
+          <ol className="mt-4 border-l-2 border-ink">
+            {analysis.timeline.map((event, index) => (
+              <li key={index} className="relative pb-5 pl-6">
+                <span className="absolute -left-[7px] top-2 h-3 w-3 rounded-full bg-ink" />
+                <p className="text-sm font-semibold text-ink-soft">{event.date ? formatDate(event.date) : "Date unknown"}</p>
+                <p className="break-words">{event.event}</p>
+                <p className="text-sm text-stamp">Proof: {event.evidence || "none"}</p>
               </li>
             ))}
-          </ul>
+          </ol>
         </section>
+      )}
+
+      {item.trace.length > 0 && (
+        <details className="rounded border border-paper-line bg-white px-4">
+          <summary className="flex min-h-12 cursor-pointer items-center font-semibold">How Ovijog built this case</summary>
+          <div className="pb-4 pt-2">
+            <AgentTrace steps={item.trace} />
+          </div>
+        </details>
       )}
 
       <section className="border-t border-paper-line pt-6">
         <p className="text-sm text-ink-soft">Your story, as you wrote it:</p>
-        <p className="mt-1 whitespace-pre-wrap">{item.story}</p>
-        <button type="button" className="mt-6 text-sm text-red underline" onClick={removeCase}>
+        <p className="mt-1 whitespace-pre-wrap break-words">{item.story}</p>
+        <button type="button" className="mt-4 inline-flex min-h-11 items-center text-sm text-red underline" onClick={removeCase}>
           Delete this case
         </button>
       </section>

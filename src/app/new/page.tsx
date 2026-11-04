@@ -88,6 +88,13 @@ export default function NewCasePage() {
   const [steps, setSteps] = useState<TraceStep[]>([]);
   const [finished, setFinished] = useState(false);
 
+  // When a problem is reported, scroll it into view (on phones it is often off-screen).
+  useEffect(() => {
+    if (error !== "") {
+      document.getElementById("form-error")?.scrollIntoView({ block: "center" });
+    }
+  }, [error]);
+
   useEffect(() => {
     // "Today" must be read in the browser, not while the page is prerendered.
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -147,6 +154,8 @@ export default function NewCasePage() {
 
     setWorking(true);
     setSteps([]);
+    // The form hides and the progress panel appears at the top: bring it into view.
+    window.scrollTo({ top: 0 });
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
@@ -209,8 +218,8 @@ export default function NewCasePage() {
       </p>
 
       {working && (
-        <section className="file-cover mt-8 p-4 md:p-6" aria-label="Ovijog is working on your case">
-          <div className="ledger rounded-sm p-5 md:p-7">
+        <section className="file-cover mt-6 p-2 sm:mt-8 sm:p-4 md:p-6" aria-label="Ovijog is working on your case">
+          <div className="sheet rounded-sm p-4 sm:p-5 md:p-7">
             <h2 className="display text-2xl">{finished ? "Your case file is ready" : "Ovijog is working on your case"}</h2>
             <p className="mt-1 text-sm text-ink-soft">
               {finished ? "Opening it now." : "This usually takes 10 to 20 seconds."}
@@ -222,8 +231,8 @@ export default function NewCasePage() {
         </section>
       )}
 
-      <form onSubmit={handleSubmit} className={"file-cover mt-8 p-4 md:p-6" + (working ? " hidden" : "")}>
-        <div className="ledger space-y-7 rounded-sm p-5 md:p-7">
+      <form onSubmit={handleSubmit} className={"file-cover mt-6 p-2 sm:mt-8 sm:p-4 md:p-6" + (working ? " hidden" : "")}>
+        <div className="sheet space-y-7 rounded-sm p-4 sm:p-5 md:p-7">
           <div>
             <label htmlFor="story" className="block text-lg font-semibold">
               What happened?
@@ -272,30 +281,42 @@ export default function NewCasePage() {
               type="file"
               accept="image/*"
               multiple
-              className="mt-3 block text-sm"
+              className="sr-only"
               onChange={(event) => {
                 handleFiles(event.target.files);
                 event.target.value = "";
               }}
               disabled={images.length >= MAX_IMAGES}
             />
+            {images.length < MAX_IMAGES && (
+              <label
+                htmlFor="screenshots"
+                className="mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-ink-soft bg-paper px-4 py-5 text-center hover:border-green focus-within:border-green"
+              >
+                <span className="text-lg font-semibold text-green">{images.length === 0 ? "Add photos" : "Add more photos"}</span>
+                <span className="text-sm text-ink-soft">
+                  Take a photo or choose from your gallery. {images.length} of {MAX_IMAGES} added.
+                </span>
+              </label>
+            )}
             {images.length > 0 && (
-              <ul className="mt-4 flex flex-wrap gap-3">
+              <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {images.map((image, index) => (
                   <li key={index} className="relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={image}
-                      alt={`Screenshot ${index + 1}`}
-                      className="h-28 w-20 rounded border border-ink-soft object-cover"
+                      alt={`Photo ${index + 1}`}
+                      className="aspect-[3/4] w-full rounded border border-ink-soft object-cover"
                     />
-                    <span className="absolute left-1 top-1 rounded bg-ink px-1.5 text-xs text-white">{index + 1}</span>
+                    <span className="absolute left-1.5 top-1.5 rounded bg-ink px-1.5 text-xs text-white">{index + 1}</span>
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="mt-1 block w-full text-center text-xs text-red underline"
+                      aria-label={`Remove photo ${index + 1}`}
+                      className="absolute right-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-white text-xl font-bold text-red shadow"
                     >
-                      Remove
+                      ×
                     </button>
                   </li>
                 ))}
@@ -303,10 +324,10 @@ export default function NewCasePage() {
             )}
           </div>
 
-          <label className="flex items-start gap-3 text-base">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-paper-line p-3 text-base">
             <input
               type="checkbox"
-              className="mt-1.5 h-4 w-4 accent-green"
+              className="mt-1 h-5 w-5 shrink-0 accent-green"
               checked={confirmed}
               onChange={(event) => setConfirmed(event.target.checked)}
             />
@@ -317,7 +338,7 @@ export default function NewCasePage() {
           </label>
 
           {error && (
-            <div role="alert" className="rounded border-l-4 border-red bg-white p-3">
+            <div id="form-error" role="alert" className="rounded border-l-4 border-red bg-white p-3">
               <p className="text-red">{error}</p>
               {steps.length > 0 && (
                 <div className="mt-3">
@@ -328,7 +349,7 @@ export default function NewCasePage() {
           )}
 
           <div className="flex flex-wrap items-center gap-4">
-            <button type="submit" className="btn btn-primary" disabled={working}>
+            <button type="submit" className="btn btn-primary w-full sm:w-auto" disabled={working}>
               {working ? "Analysing your case…" : "Analyse my case"}
             </button>
           </div>

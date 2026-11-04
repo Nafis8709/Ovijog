@@ -92,9 +92,9 @@ export default function CasesPage() {
             <li key={item.id}>
               <Link
                 href={`/case/${item.id}`}
-                className="file-cover block p-3 transition-transform hover:-translate-y-0.5"
+                className="file-cover block p-2 transition-transform hover:-translate-y-0.5 motion-reduce:transition-none sm:p-3"
               >
-                <div className="ledger flex flex-wrap items-center justify-between gap-4 rounded-sm p-4">
+                <div className="sheet flex flex-wrap items-center justify-between gap-4 rounded-sm p-4">
                   <div>
                     <p className="text-xl font-semibold">
                       {item.analysis.productOrService || "Untitled case"}

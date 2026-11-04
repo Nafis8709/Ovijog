@@ -31,6 +31,9 @@ Most people never complain because they don't know the law, don't know how to wr
 - **Visible agent:** the steps stream live to the screen in plain language and stay on the case as "How Ovijog built this case". Each step records whether the AI or plain code did it (`TraceStep.by`).
 - **Story in any language:** Bangla, English or Banglish, typed or spoken (voice input uses the browser's speech recognition, Chrome or Edge).
 - **Screenshot reading:** the AI classifies each screenshot (payment proof, order or ad, chat, product photo) and copies out amounts, TrxIDs, dates and promises.
+- **Clear next step:** every case opens with one "what to do now" card that changes as the case moves on.
+- **Add proof later:** photos can be added to a case at any time; Ovijog reads them and the evidence score updates.
+- **Phone-first layout:** tested at 320, 360, 768 and 1280 px wide with no sideways scrolling and 44 px tap targets.
 - **Evidence strength meter:** a 0–100 score computed in code from four proofs (you paid, what was promised, what went wrong, you tried to fix it), with tips for what to add.
 - **Evidence-linked timeline:** every event says which screenshot or statement it came from.
 - **Grounded law matching:** the AI can only choose from a fixed list of sections; the legal text shown always comes from the app's own data.
@@ -109,6 +112,7 @@ src/
     case/[id]/letter/page.tsx  Complaint letter (wraps views/LetterView)
     api/analyze/route.ts     The agent, streamed step by step
     api/reply/route.ts       Negotiator: reads the seller's reply
+    api/evidence/route.ts    Reads photos added to an existing case
     api/complaint/route.ts   Formal complaint in Bangla
   views/
     CaseView.tsx             Case file UI (Stage 1 and Stage 2)

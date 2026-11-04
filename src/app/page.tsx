@@ -97,7 +97,7 @@ export default function HomePage() {
             Tell Ovijog what went wrong. It writes the message to send the seller and, if they won&apos;t fix it, a
             formal complaint to the consumer rights directorate. Everything is in Bangla and ready to send.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link href="/new" className="btn btn-primary">
               Start a case
             </Link>
@@ -107,8 +107,8 @@ export default function HomePage() {
         </div>
 
         {/* A static preview of what a case looks like */}
-        <div className="file-cover p-5 shadow-[6px_6px_0_var(--ink)]" aria-hidden="true">
-          <div className="ledger rounded-sm p-5">
+        <div className="file-cover p-3 shadow-[4px_4px_0_var(--ink)] sm:p-5 md:shadow-[6px_6px_0_var(--ink)]" aria-hidden="true">
+          <div className="sheet rounded-sm p-4 sm:p-5">
             <p className="text-sm text-ink-soft">Case file</p>
             <p className="mt-1 text-xl font-semibold">Leather jacket, ৳2,400</p>
             <p className="mt-2 text-base text-ink-soft">
@@ -197,14 +197,14 @@ export default function HomePage() {
         <h2 className="display text-3xl">Questions</h2>
         <div className="mt-6 max-w-3xl divide-y divide-paper-line border-y border-paper-line">
           {QUESTIONS.map((item) => (
-            <details key={item.question} className="group py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold">
+            <details key={item.question} className="group py-2">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold">
                 {item.question}
                 <span className="text-2xl text-green transition-transform group-open:rotate-45 motion-reduce:transition-none" aria-hidden="true">
                   +
                 </span>
               </summary>
-              <p className="mt-2 text-ink-soft">{item.answer}</p>
+              <p className="pb-2 text-ink-soft">{item.answer}</p>
             </details>
           ))}
         </div>

@@ -36,11 +36,11 @@ function TurnCard({ turn, number }: { turn: NegotiationTurn; number: number }) {
   const reply = language === "bn" ? analysis.replyBn : analysis.replyEn;
 
   return (
-    <article className="rounded border-2 border-ink bg-white p-4 md:p-5">
+    <article className="rounded border-2 border-ink bg-white p-3 sm:p-4 md:p-5">
       <p className="text-sm text-ink-soft">
         Seller reply {number}, {formatDate(turn.at.slice(0, 10))}
       </p>
-      <blockquote className="mt-2 border-l-4 border-paper-line pl-3 text-ink-soft">{turn.sellerSaid}</blockquote>
+      <blockquote className="mt-2 break-words border-l-4 border-paper-line pl-3 text-ink-soft">{turn.sellerSaid}</blockquote>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <span className="stamp text-base">{TACTIC_LABELS[analysis.tactic]}</span>
@@ -75,7 +75,7 @@ function TurnCard({ turn, number }: { turn: NegotiationTurn; number: number }) {
               English
             </button>
           </div>
-          <p className="ledger mt-3 whitespace-pre-wrap rounded border border-paper-line p-3 leading-8">{reply}</p>
+          <p className="ledger mt-3 whitespace-pre-wrap break-words rounded border border-paper-line p-3 leading-8">{reply}</p>
           <div className="mt-3">
             <CopyButton text={reply} label="Copy reply" />
           </div>
@@ -150,7 +150,7 @@ export default function Negotiator({ item, onUpdate }: Props) {
   const latest = item.negotiation.length > 0 ? item.negotiation[item.negotiation.length - 1] : null;
 
   return (
-    <div className="mt-6 border-t border-paper-line pt-5">
+    <div id="negotiation" className="mt-6 border-t border-paper-line pt-5">
       <h3 className="text-xl font-semibold">Did the seller reply?</h3>
       <p className="text-sm text-ink-soft">
         Paste their message or add a screenshot. Ovijog tells you what they are doing and what to send next.

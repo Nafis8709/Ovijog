@@ -37,7 +37,23 @@
   --font-letter: "Noto Serif Bengali", Georgia, serif;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Anchored sections (e.g. #stage-1) land a little below the top edge */
+[id] {
+  scroll-margin-top: 1rem;
+}
+
 body {
+  -webkit-tap-highlight-color: rgba(15, 94, 63, 0.15);
   background: var(--paper);
   color: var(--ink);
   font-family: "Anek Bangla Variable", system-ui, sans-serif;
@@ -53,7 +69,12 @@ body {
   line-height: 1.05;
 }
 
-/* Ruled register paper for the main working areas */
+/* A plain white sheet inside a file cover */
+.sheet {
+  background-color: var(--white);
+}
+
+/* Ruled register paper, only for message boxes whose line height (32px) sits on the lines */
 .ledger {
   background-color: var(--white);
   background-image: repeating-linear-gradient(
@@ -123,6 +144,7 @@ body {
 
 /* Buttons */
 .btn {
+  min-height: 44px; /* comfortable tap target on phones */
   display: inline-flex;
   align-items: center;
   justify-content: center;

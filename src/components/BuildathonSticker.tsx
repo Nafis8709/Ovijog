@@ -1,13 +1,14 @@
 "use client";
 
 // Required by the buildathon rules: the official sticker must be clearly
-// visible near the top of the page.
+// visible near the top of the page. It sits in the slim strip above the navbar.
 // Put the official image at /public/buildathon-sticker.png and it is used
 // automatically. Until then, a text badge with the same wording is shown.
 
 import { useEffect, useState } from "react";
 
 const STICKER_PATH = "/buildathon-sticker.png";
+const STICKER_TEXT = "Built For Ostad Presents YUNet AIgnite Buildathon 2026";
 
 export default function BuildathonSticker() {
   const [hasImage, setHasImage] = useState(false);
@@ -20,17 +21,13 @@ export default function BuildathonSticker() {
   }, []);
 
   if (hasImage) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={STICKER_PATH} alt="Built For Ostad Presents YUNet AIgnite Buildathon 2026" className="h-10 w-auto" />
-    );
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={STICKER_PATH} alt={STICKER_TEXT} className="h-8 w-auto" />;
   }
 
   return (
-    <span className="rounded-md border-2 border-ink bg-white px-2 py-1 text-xs font-semibold leading-tight text-ink">
-      Built For Ostad Presents
-      <br />
-      YUNet AIgnite Buildathon 2026
+    <span className="rounded border border-ink/60 px-2 py-0.5 text-center text-xs font-semibold leading-tight text-ink">
+      {STICKER_TEXT}
     </span>
   );
 }

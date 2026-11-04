@@ -28,7 +28,7 @@ Most people never complain because they don't know the law, don't know how to wr
 
 ## Features
 
-- **Visible agent:** the steps stream live to the screen, each labelled **AI** or **Code**, and stay on the case as "How Ovijog reached this".
+- **Visible agent:** the steps stream live to the screen in plain language and stay on the case as "How Ovijog built this case". Each step records whether the AI or plain code did it (`TraceStep.by`).
 - **Story in any language:** Bangla, English or Banglish, typed or spoken (voice input uses the browser's speech recognition, Chrome or Edge).
 - **Screenshot reading:** the AI classifies each screenshot (payment proof, order or ad, chat, product photo) and copies out amounts, TrxIDs, dates and promises.
 - **Evidence strength meter:** a 0–100 score computed in code from four proofs (you paid, what was promised, what went wrong, you tried to fix it), with tips for what to add.

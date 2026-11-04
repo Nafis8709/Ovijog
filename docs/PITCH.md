@@ -36,7 +36,7 @@
 
 1. "Rafi paid 2,400 taka for a jacket. It came torn, wrong size, and the page blocked him."
 2. Start a case: paste the story (or speak it in Bangla), add 2–3 screenshots, tick the honesty box, click **Analyse my case**.
-3. While the agent works, point at the steps: "These two are the AI. These three are code the AI can't change."
+3. While the agent works, narrate the steps: "Reading and understanding are the AI. Checking the law, the deadline and the evidence score are plain code the AI can't change."
 4. On the case: the evidence meter, the stamp with days left, and the law text that comes from the Act, not the AI.
 5. Stage 1: copy the demand, click **I sent it**.
 6. Negotiation: paste "Bhai courier er problem, ektu wait koren". Ovijog says **Stalling** and drafts a firm 48-hour reply. Paste a threat and it says **stop replying, escalate**.

@@ -15,8 +15,9 @@ import type { Case, CaseAnalysis, EvidenceItem, TraceStep } from "@/lib/types";
 
 const MAX_IMAGES = 4;
 
+// Two short examples (online and in a shop) so people see it is not only for online orders.
 const STORY_PLACEHOLDER =
-  "Example: Facebook page 'XYZ Fashion' theke 2,400 takar jacket order korsilam, bKash e advance dilam. Jacket chera ashse, size o vul. Message dile block kore dise.";
+  "Example: Facebook page theke 2,400 takar jacket order korsilam, bKash e advance dilam. Jacket chera ashse, size o vul, message dile block kore dise.\n\nOr: Pharmacy te ek pata oshudh er MRP 320 taka, kintu amar kach theke 450 taka nilo.";
 
 interface StreamResult {
   analysis?: CaseAnalysis;
@@ -204,7 +205,7 @@ export default function NewCasePage() {
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="display text-4xl">Start a case</h1>
       <p className="mt-3 text-ink-soft">
-        Tell Ovijog what happened, in your own words. The more evidence you add, the stronger your complaint.
+        Tell Ovijog what happened, in your own words. It works for shops, online orders and services. The more proof you add, the stronger your complaint.
       </p>
 
       {working && (
@@ -212,7 +213,7 @@ export default function NewCasePage() {
           <div className="ledger rounded-sm p-5 md:p-7">
             <h2 className="display text-2xl">{finished ? "Your case file is ready" : "Ovijog is working on your case"}</h2>
             <p className="mt-1 text-sm text-ink-soft">
-              {finished ? "Opening it now." : "Steps marked AI are done by the model. Steps marked Code are checks the AI cannot change."}
+              {finished ? "Opening it now." : "This usually takes 10 to 20 seconds."}
             </p>
             <div className="mt-6">
               {steps.length === 0 ? <p className="text-ink-soft">Starting…</p> : <AgentTrace steps={steps} />}
@@ -228,7 +229,7 @@ export default function NewCasePage() {
               What happened?
             </label>
             <p className="text-sm text-ink-soft">
-              Bangla, English or Banglish. Mention the seller, the product, how much you paid and what went wrong.
+              Bangla, English or Banglish. Mention who you bought from, what it was, how much you paid and what went wrong.
             </p>
             <textarea
               id="story"
@@ -247,7 +248,7 @@ export default function NewCasePage() {
             <label htmlFor="purchaseDate" className="block text-lg font-semibold">
               When did you buy it?
             </label>
-            <p className="text-sm text-ink-soft">Used for the 30-day deadline if the screenshots do not show a date.</p>
+            <p className="text-sm text-ink-soft">Used for your 30-day deadline if your photos or story do not show a date.</p>
             <input
               id="purchaseDate"
               type="date"
@@ -260,11 +261,11 @@ export default function NewCasePage() {
 
           <div>
             <label htmlFor="screenshots" className="block text-lg font-semibold">
-              Screenshots
+              Photos and screenshots (optional)
             </label>
             <p className="text-sm text-ink-soft">
-              Order page, payment SMS (bKash or Nagad), your chat with the seller, photos of what you received. Up
-              to {MAX_IMAGES}.
+              A receipt or payment SMS, the order page, post or price tag, your messages with the seller, or a photo of
+              what you received. Up to {MAX_IMAGES}.
             </p>
             <input
               id="screenshots"

@@ -79,7 +79,7 @@ export function scoreEvidenceParts(evidence: EvidenceItem[], analysis: CaseAnaly
       screenshotsOfKind(evidence, ["payment_proof"]),
       analysis.amountPaid !== null || analysis.paymentMethod !== "",
       "Your story",
-      "Add the bKash or Nagad SMS, or the payment receipt, showing the amount and TrxID.",
+      "Add the receipt, or the bKash or Nagad SMS, showing the amount.",
     ),
   );
 
@@ -90,7 +90,7 @@ export function scoreEvidenceParts(evidence: EvidenceItem[], analysis: CaseAnaly
       screenshotsOfKind(evidence, ["order_proof"]),
       analysis.productOrService !== "",
       "Your story",
-      "Add a screenshot of the product post, advertisement or order page.",
+      "Add the post, ad, order page, price tag or packaging that shows what was promised.",
     ),
   );
 

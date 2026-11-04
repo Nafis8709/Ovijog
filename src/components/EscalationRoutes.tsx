@@ -10,7 +10,7 @@ export default function EscalationRoutes({ routes }: { routes: EscalationRoute[]
     <section>
       <h2 className="display text-2xl">Where to take this</h2>
       <p className="mt-1 text-sm text-ink-soft">
-        Chosen from how you paid and what happened. Every number here was checked by hand, not written by the AI.
+        Based on how you paid and what happened.
       </p>
       <ul className="mt-4 space-y-4">
         {routes.map((route) => (

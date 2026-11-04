@@ -11,7 +11,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Ovijog: get your money back",
   description:
-    "Cheated by an online seller in Bangladesh? Ovijog's AI agent turns your story and screenshots into a demand message and a formal consumer complaint under the Consumers' Right Protection Act, 2009.",
+    "Cheated by a shop, an online seller or a service in Bangladesh? Ovijog writes the message to send the seller and a formal consumer complaint under the Consumers' Right Protection Act, 2009.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

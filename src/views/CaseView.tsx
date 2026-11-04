@@ -173,7 +173,7 @@ export default function CaseView() {
 
       {item.trace.length > 0 && (
         <details className="rounded border border-paper-line bg-white p-4">
-          <summary className="cursor-pointer font-semibold">How Ovijog reached this</summary>
+          <summary className="cursor-pointer font-semibold">How Ovijog built this case</summary>
           <div className="mt-4">
             <AgentTrace steps={item.trace} />
           </div>
@@ -198,7 +198,7 @@ export default function CaseView() {
         <section>
           <h2 className="display text-2xl">Make your case stronger</h2>
           <p className="mt-1 text-sm text-ink-soft">
-            Evidence confidence: <strong className="text-ink">{analysis.confidence}</strong>. Answering these will help.
+            Answering these will make your complaint harder to dismiss.
           </p>
           <ul className="mt-3 list-disc space-y-1 pl-5">
             {analysis.missingInfo.map((question) => (
@@ -229,7 +229,7 @@ export default function CaseView() {
       {analysis.matchedSections.length > 0 && (
         <section>
           <h2 className="display text-2xl">The law the seller broke</h2>
-          <p className="mt-1 text-sm text-ink-soft">Consumers&apos; Right Protection Act, 2009. The quoted text comes from the Act, not from the AI.</p>
+          <p className="mt-1 text-sm text-ink-soft">From the Consumers&apos; Right Protection Act, 2009.</p>
           <div className="mt-4 space-y-5">
             {analysis.matchedSections.map((match) => {
               const law = findSection(match.section);
@@ -265,7 +265,7 @@ export default function CaseView() {
         <section className="rounded border-2 border-green bg-white p-5 md:p-7">
           <h2 className="display text-2xl text-green">Stage 1: send this to the seller</h2>
           <p className="mt-1 text-ink-soft">
-            Paste it into Messenger or WhatsApp. Many sellers refund once they see the law and the deadline.
+            Send it by Messenger, WhatsApp or SMS, or show it at the shop. Many sellers fix the problem once they see the law and a deadline.
           </p>
           <div className="mt-4 flex gap-2" role="tablist" aria-label="Message language">
             <button

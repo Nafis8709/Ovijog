@@ -1,6 +1,6 @@
 // Shows the agent's steps: live while it works (on the new-case page),
-// and afterwards as "How Ovijog reached this" on the case page.
-// Each step is labelled honestly as done by the AI or by plain code.
+// and afterwards as "How Ovijog built this case" on the case page.
+// (Each step also records whether the AI or plain code did it; see TraceStep.by.)
 
 import type { TraceStep } from "@/lib/types";
 
@@ -34,17 +34,7 @@ export default function AgentTrace({ steps }: { steps: TraceStep[] }) {
         <li key={step.id} className="flex gap-3">
           <StatusMark status={step.status} />
           <div className="min-w-0">
-            <p className="font-semibold">
-              {step.label}
-              <span
-                className={
-                  "ml-2 rounded px-1.5 py-0.5 text-xs font-semibold " +
-                  (step.by === "ai" ? "bg-green-soft text-green" : "bg-paper text-stamp")
-                }
-              >
-                {step.by === "ai" ? "AI" : "Code"}
-              </span>
-            </p>
+            <p className="font-semibold">{step.label}</p>
             {step.details.length > 0 && (
               <ul className="mt-1 space-y-0.5 text-sm text-ink-soft">
                 {step.details.map((detail, index) => (

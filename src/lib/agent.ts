@@ -99,7 +99,7 @@ export async function runCaseAgent(input: AgentInput, emit: (step: TraceStep) =>
     raw = isMockMode() ? mockAnalysis(input.story, input.purchaseDate) : await generateJson<unknown>(prompt, [], analysisSchema);
   } catch (error) {
     understandStep.status = "failed";
-    understandStep.details.push("The AI could not analyse the case.");
+    understandStep.details.push("Could not work out the case.");
     report(understandStep);
     throw error;
   }
@@ -124,12 +124,13 @@ export async function runCaseAgent(input: AgentInput, emit: (step: TraceStep) =>
   for (const match of analysis.matchedSections) {
     const law = findSection(match.section);
     if (law) {
-      lawStep.details.push(`Section ${law.section}: ${law.titleEn} (verified against the Act)`);
+      lawStep.details.push(`Section ${law.section}: ${law.titleEn}`);
     }
   }
   const rejected = analysis.isConsumerCase ? rawCount - analysis.matchedSections.length : 0;
   if (rejected > 0) {
-    lawStep.details.push(`Rejected ${rejected} suggestion(s) that are not in Ovijog's list of sections`);
+    // Not shown to the user; kept in the server log for checking the AI.
+    console.warn(`Dropped ${rejected} section(s) not in the allowed list`);
   }
   lawStep.status = "done";
   report(lawStep);

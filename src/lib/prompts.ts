@@ -82,7 +82,7 @@ ${sectionCatalogueForPrompt()}
 6. missingInfo: up to 4 short questions (in English) whose answers would make the complaint stronger (for example "Do you have the order confirmation screenshot?").
 7. confidence: "high" if facts and evidence are clear, "medium" if some key facts are missing, "low" if the story is vague or contradictory.
 8. Write the Stage 1 demand message to the SELLER in Bangla (demandMessageBn) and the same message in English (demandMessageEn). It must:
-   - be polite, firm and short (under 120 words), suitable to paste into Facebook Messenger or WhatsApp;
+   - be polite, firm and short (under 120 words), suitable to send by Messenger, WhatsApp or SMS, or to show a shopkeeper;
    - state the order (product, amount, date, transaction ID if known) and the problem;
    - mention the Consumers' Right Protection Act 2009 and the section number(s) you chose;
    - ask for a full refund or a correct replacement within 3 days;

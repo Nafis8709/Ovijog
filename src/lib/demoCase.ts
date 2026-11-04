@@ -21,7 +21,7 @@ export function buildDemoCase(): Case {
     id: newCaseId(),
     createdAt: new Date().toISOString(),
     story:
-      "Facebook page 'Winter Trend BD (demo)' theke ekta leather jacket order korsilam 2,400 taka bKash e advance diye. Post e bolsilo 'original leather, size L'. Jacket ashse rexine er, size M, ar hata chera. Page e message dilam, prothome bolse exchange korbe, pore amake block kore dise.",
+      "Facebook page 'Winter Trend BD (example)' theke ekta leather jacket order korsilam 2,400 taka bKash e advance diye. Post e bolsilo 'original leather, size L'. Jacket ashse rexine er, size M, ar hata chera. Page e message dilam, prothome bolse exchange korbe, pore amake block kore dise.",
     purchaseDate: orderDate,
     images: [],
     status: "new",
@@ -31,14 +31,14 @@ export function buildDemoCase(): Case {
     evidence: [],
     negotiation: [],
     trace: [
-      { id: "read", label: "Reading your screenshots", by: "ai", status: "skipped", details: ["Sample case: no screenshots attached."] },
+      { id: "read", label: "Reading your screenshots", by: "ai", status: "skipped", details: ["This example has no screenshots."] },
       {
         id: "understand",
         label: "Understanding your case",
         by: "ai",
         status: "done",
         details: [
-          "Seller: Winter Trend BD (demo)",
+          "Seller: Winter Trend BD (example)",
           "Product: Leather jacket, size L",
           "Amount: ৳2,400",
           "Timeline: 4 events, each linked to its evidence",
@@ -51,8 +51,8 @@ export function buildDemoCase(): Case {
         by: "code",
         status: "done",
         details: [
-          "Section 45: Not selling or delivering properly any goods or service promised (verified against the Act)",
-          "Section 44: Deceiving buyers by false advertisement (verified against the Act)",
+          "Section 45: Not selling or delivering properly any goods or service promised",
+          "Section 44: Deceiving buyers by false advertisement",
         ],
       },
       { id: "deadline", label: "Calculating your deadline", by: "code", status: "done", details: ["Counted from the delivery date (30 days, Section 60)"] },
@@ -63,8 +63,8 @@ export function buildDemoCase(): Case {
         "The buyer paid Tk 2,400 by bKash for an 'original leather' size L jacket from a Facebook page, received a torn rexine jacket in size M, and was blocked after asking for an exchange.",
       summaryBn:
         "ক্রেতা একটি ফেসবুক পেজ থেকে বিকাশে ২,৪০০ টাকা দিয়ে 'অরিজিনাল লেদার' সাইজ L জ্যাকেট অর্ডার করেন, কিন্তু ছেঁড়া রেক্সিনের সাইজ M জ্যাকেট পান এবং বদলানোর কথা বলার পর তাকে ব্লক করা হয়।",
-      sellerName: "Winter Trend BD (demo)",
-      sellerContact: "facebook.com/wintertrendbd-demo",
+      sellerName: "Winter Trend BD (example)",
+      sellerContact: "facebook.com/wintertrendbd-example",
       productOrService: "Leather jacket, size L",
       amountPaid: 2400,
       paymentMethod: "bKash (advance)",

@@ -57,13 +57,13 @@ export default function CasesPage() {
       <div className="mx-auto max-w-5xl px-4 py-12">
         <h1 className="display text-4xl">My cases</h1>
         <p className="mt-4 max-w-xl text-ink-soft">
-          No cases yet. Start one with your story and screenshots, or open the sample case to see how it works.
+          No cases yet. Start one with your story and any photos or screenshots, or look at an example first.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href="/new" className="btn btn-primary">
             Start a case
           </Link>
-          <DemoCaseButton label="Open a sample case" />
+          <DemoCaseButton label="See an example" />
         </div>
       </div>
     );

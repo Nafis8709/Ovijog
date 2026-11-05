@@ -50,7 +50,7 @@ export default function NextStep({ item, deadline, score, canAct }: Props) {
     body = "Keep any complaint number you were given. The directorate may call you, so keep your phone close and your proof saved.";
   } else if (item.status === "resolved") {
     title = "Resolved";
-    body = "The seller fixed the problem. Keep your proof for a few weeks in case anything goes wrong again.";
+    body = "The seller fixed the problem. Keep your proof for a few weeks in case anything goes wrong again. If it was not really fixed, you can reopen the case below.";
   }
 
   const showEvidenceTip = showEvidenceTipFor(item, score, canAct);

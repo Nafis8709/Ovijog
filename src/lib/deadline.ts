@@ -32,6 +32,19 @@ export function todayIso(): string {
   return toIsoDate(todayInDhaka());
 }
 
+// The Bangladesh calendar date (YYYY-MM-DD) of a timestamp such as "2026-11-04T19:30:00.000Z"
+// (which is already 5 Nov in Dhaka). Returns "" for anything that is not a valid timestamp.
+export function dhakaDateOf(timestamp: string): string {
+  if (typeof timestamp !== "string" || timestamp === "") {
+    return "";
+  }
+  const time = new Date(timestamp).getTime();
+  if (Number.isNaN(time)) {
+    return "";
+  }
+  return new Date(time + 6 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
 export interface DeadlineInfo {
   known: boolean; // false when we have no usable date
   startDate: string; // the date the 30 days are counted from

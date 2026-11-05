@@ -9,6 +9,7 @@ import { buildEvidencePrompt, evidenceSchema } from "@/lib/prompts";
 import { cleanEvidence } from "@/lib/validate";
 import { mockEvidence } from "@/lib/mockAi";
 import type { EvidenceItem } from "@/lib/types";
+import { guardRequest, readJsonBody } from "@/lib/guard";
 
 export const maxDuration = 60;
 
@@ -16,14 +17,20 @@ const MAX_IMAGES = 4;
 const MAX_IMAGE_CHARS = 2_000_000;
 
 export async function POST(request: Request): Promise<Response> {
-  let body: { images?: unknown; startIndex?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "Request body must be JSON." }, { status: 400 });
+  const blocked = guardRequest(request, "evidence");
+  if (blocked !== null) {
+    return blocked;
   }
+  const read = await readJsonBody(request);
+  if (!read.ok) {
+    return read.response;
+  }
+  const body = (read.body ?? {}) as { images?: unknown; startIndex?: unknown };
 
-  const startIndex = typeof body.startIndex === "number" && body.startIndex >= 0 ? Math.floor(body.startIndex) : 0;
+  const startIndex =
+    typeof body.startIndex === "number" && Number.isFinite(body.startIndex) && body.startIndex >= 0
+      ? Math.min(100, Math.floor(body.startIndex))
+      : 0;
   const images: ImageInput[] = [];
   if (Array.isArray(body.images)) {
     for (const item of body.images.slice(0, MAX_IMAGES)) {

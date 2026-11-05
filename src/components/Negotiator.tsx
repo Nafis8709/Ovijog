@@ -8,7 +8,7 @@
 import { useState } from "react";
 import CopyButton from "./CopyButton";
 import { compressImage } from "@/lib/imageUtils";
-import { formatDate } from "@/lib/deadline";
+import { dhakaDateOf, formatDate } from "@/lib/deadline";
 import type { Case, NegotiationTurn, ReplyAnalysis, SellerTactic } from "@/lib/types";
 
 const TACTIC_LABELS: Record<SellerTactic, string> = {
@@ -38,7 +38,7 @@ function TurnCard({ turn, number }: { turn: NegotiationTurn; number: number }) {
   return (
     <article className="rounded border-2 border-ink bg-white p-3 sm:p-4 md:p-5">
       <p className="text-sm text-ink-soft">
-        Seller reply {number}, {formatDate(turn.at.slice(0, 10))}
+        Seller reply {number}, {formatDate(dhakaDateOf(turn.at))}
       </p>
       <blockquote className="mt-2 break-words border-l-4 border-paper-line pl-3 text-ink-soft">{turn.sellerSaid}</blockquote>
 
@@ -75,7 +75,12 @@ function TurnCard({ turn, number }: { turn: NegotiationTurn; number: number }) {
               English
             </button>
           </div>
-          <p className="ledger mt-3 whitespace-pre-wrap break-words rounded border border-paper-line p-3 leading-8">{reply}</p>
+          <p
+            lang={language === "bn" ? "bn" : "en"}
+            className="ledger mt-3 whitespace-pre-wrap break-words rounded border border-paper-line p-3 leading-8"
+          >
+            {reply}
+          </p>
           <div className="mt-3">
             <CopyButton text={reply} label="Copy reply" />
           </div>

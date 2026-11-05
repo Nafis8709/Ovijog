@@ -7,13 +7,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import VoiceInput from "@/components/VoiceInput";
 import { compressImage } from "@/lib/imageUtils";
-import { newCaseId, saveCase } from "@/lib/caseStore";
+import { newCaseId, saveCase, STORAGE_FULL_MESSAGE } from "@/lib/caseStore";
 import { todayIso } from "@/lib/deadline";
 import { FALSE_CASE_WARNING } from "@/lib/law";
 import AgentTrace from "@/components/AgentTrace";
 import type { Case, CaseAnalysis, EvidenceItem, TraceStep } from "@/lib/types";
 
 const MAX_IMAGES = 4;
+// Keep the request well under the hosting limit (4.5 MB). Compressed photos are usually 100-400 KB each.
+const MAX_TOTAL_PHOTO_CHARS = 3_500_000;
 
 // Two short examples (online and in a shop) so people see it is not only for online orders.
 const STORY_PLACEHOLDER =
@@ -152,6 +154,15 @@ export default function NewCasePage() {
       return;
     }
 
+    let totalPhotoChars = 0;
+    for (const image of images) {
+      totalPhotoChars += image.length;
+    }
+    if (totalPhotoChars > MAX_TOTAL_PHOTO_CHARS) {
+      setError("Your photos are too large to send together. Remove one or two and try again.");
+      return;
+    }
+
     setWorking(true);
     setSteps([]);
     // The form hides and the progress panel appears at the top: bring it into view.
@@ -197,7 +208,7 @@ export default function NewCasePage() {
       };
       const saved = saveCase(newCase);
       if (!saved) {
-        setError("Your browser storage is full or blocked, so the case could not be saved.");
+        setError(STORAGE_FULL_MESSAGE);
         setWorking(false);
         return;
       }

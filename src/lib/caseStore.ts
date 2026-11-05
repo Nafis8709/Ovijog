@@ -9,14 +9,35 @@ const STORAGE_KEY = "ovijog.cases.v1";
 
 // Cases saved by an older version may lack newer fields; fill them in.
 function normalize(item: Case): Case {
+  const analysis = item.analysis;
   return {
     ...item,
+    story: typeof item.story === "string" ? item.story : "",
+    purchaseDate: typeof item.purchaseDate === "string" ? item.purchaseDate : "",
+    analysis: {
+      ...analysis,
+      timeline: Array.isArray(analysis.timeline) ? analysis.timeline : [],
+      matchedSections: Array.isArray(analysis.matchedSections) ? analysis.matchedSections : [],
+      missingInfo: Array.isArray(analysis.missingInfo) ? analysis.missingInfo : [],
+      demandMessageBn: analysis.demandMessageBn || "",
+      demandMessageEn: analysis.demandMessageEn || "",
+    },
     images: Array.isArray(item.images) ? item.images : [],
     evidence: Array.isArray(item.evidence) ? item.evidence : [],
     trace: Array.isArray(item.trace) ? item.trace : [],
     negotiation: Array.isArray(item.negotiation) ? item.negotiation : [],
     complaint: item.complaint || null,
-    complainant: item.complainant || null,
+    complainant: item.complainant
+      ? {
+          name: item.complainant.name || "",
+          fatherName: item.complainant.fatherName || "",
+          motherName: item.complainant.motherName || "",
+          occupation: item.complainant.occupation || "",
+          phone: item.complainant.phone || "",
+          email: item.complainant.email || "",
+          address: item.complainant.address || "",
+        }
+      : null,
     demandSentAt: item.demandSentAt || "",
   };
 }
@@ -31,7 +52,10 @@ export function loadCases(): Case[] {
     if (Array.isArray(parsed)) {
       const cases: Case[] = [];
       for (const item of parsed) {
-        cases.push(normalize(item as Case));
+        // Skip anything damaged instead of crashing the page.
+        if (item && typeof item.id === "string" && item.analysis && typeof item.analysis === "object") {
+          cases.push(normalize(item as Case));
+        }
       }
       return cases;
     }
@@ -41,22 +65,14 @@ export function loadCases(): Case[] {
   }
 }
 
-// Returns true if saved. If storage is full we retry without screenshots.
+// Returns true if saved, false if the browser refused (storage full or blocked).
+// Nothing is dropped silently: the caller tells the user what to do.
 function saveAll(cases: Case[]): boolean {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cases));
     return true;
   } catch {
-    try {
-      const withoutImages: Case[] = [];
-      for (const item of cases) {
-        withoutImages.push({ ...item, images: [] });
-      }
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(withoutImages));
-      return true;
-    } catch {
-      return false;
-    }
+    return false;
   }
 }
 
@@ -97,6 +113,29 @@ export function deleteCase(id: string): void {
   }
   saveAll(remaining);
 }
+
+// The built-in example case uses ids starting with this, so it can be replaced
+// instead of piling up, and left out of the dashboard totals.
+export const EXAMPLE_PREFIX = "example-";
+
+export function isExampleCase(item: Case): boolean {
+  return item.id.startsWith(EXAMPLE_PREFIX);
+}
+
+// Saves a fresh example case, removing any older copy first.
+export function saveExampleCase(example: Case): boolean {
+  const others: Case[] = [];
+  for (const item of loadCases()) {
+    if (!isExampleCase(item)) {
+      others.push(item);
+    }
+  }
+  others.unshift(example);
+  return saveAll(others);
+}
+
+export const STORAGE_FULL_MESSAGE =
+  "Your browser's storage for this site is full, so this could not be saved. Delete an old case in My cases and try again.";
 
 export function newCaseId(): string {
   const random = Math.random().toString(36).slice(2, 8);

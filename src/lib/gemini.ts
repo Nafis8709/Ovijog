@@ -121,10 +121,18 @@ export async function generateJson<T>(prompt: string, images: ImageInput[], sche
   throw firstError;
 }
 
-// Converts "data:image/jpeg;base64,AAAA" into { mimeType, base64 }.
+// Only photo formats the AI reads well. (The browser converts every photo to JPEG first.)
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const DATA_URL = /^data:(image\/[a-z]+);base64,([A-Za-z0-9+/]+={0,2})$/;
+
+export function isAllowedImageDataUrl(dataUrl: string): boolean {
+  return dataUrlToImage(dataUrl) !== null;
+}
+
+// Converts "data:image/jpeg;base64,AAAA" into { mimeType, base64 }, or null if it is not a safe image.
 export function dataUrlToImage(dataUrl: string): ImageInput | null {
-  const match = /^data:(image\/[a-zA-Z+.-]+);base64,(.+)$/.exec(dataUrl);
-  if (!match) {
+  const match = DATA_URL.exec(dataUrl);
+  if (!match || !ALLOWED_IMAGE_TYPES.includes(match[1])) {
     return null;
   }
   return { mimeType: match[1], base64: match[2] };

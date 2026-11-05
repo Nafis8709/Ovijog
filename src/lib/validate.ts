@@ -2,6 +2,7 @@
 // The model is helpful but not trusted: anything outside the rules is removed.
 
 import { allowedSectionNumbers } from "./law";
+import { todayIso } from "./deadline";
 import type {
   CaseAnalysis,
   ComplaintDraft,
@@ -109,6 +110,11 @@ function cleanAmount(value: unknown): number | null {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function cleanAnalysis(raw: any): CaseAnalysis {
+  // A problem date in the future is a model mistake; drop it so the deadline falls back to the purchase date.
+  let incidentDate = cleanDate(raw?.incidentDate);
+  if (incidentDate !== "" && incidentDate > todayIso()) {
+    incidentDate = "";
+  }
   const isConsumerCase = raw?.isConsumerCase !== false;
   let sections = cleanSections(raw?.matchedSections);
   if (!isConsumerCase) {
@@ -133,7 +139,7 @@ export function cleanAnalysis(raw: any): CaseAnalysis {
     amountPaid: cleanAmount(raw?.amountPaid),
     paymentMethod: cleanText(raw?.paymentMethod, 60),
     transactionId: cleanText(raw?.transactionId, 60),
-    incidentDate: cleanDate(raw?.incidentDate),
+    incidentDate: incidentDate,
     timeline: cleanTimeline(raw?.timeline),
     matchedSections: sections,
     isConsumerCase: isConsumerCase,

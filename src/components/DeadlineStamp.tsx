@@ -41,6 +41,15 @@ export default function DeadlineStamp({ deadline, animate }: { deadline: Deadlin
     );
   }
 
+  if (deadline.daysLeft === 0) {
+    return (
+      <span className={"stamp red text-2xl" + animation}>
+        আজই শেষ দিন
+        <span className="block text-xs font-semibold">today is the last day to file</span>
+      </span>
+    );
+  }
+
   const urgent = deadline.daysLeft <= 5;
   return (
     <span className={"stamp text-3xl" + (urgent ? " red" : "") + animation}>

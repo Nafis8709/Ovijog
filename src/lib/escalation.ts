@@ -2,7 +2,9 @@
 // so every phone number and address shown here is one we checked.
 //
 // Sources (checked November 2026):
-// - DNCRP: hotline 16121, info@dncrp.gov.bd, dncrp.gov.bd (Bangla Tribune, ITV BD)
+// - DNCRP: hotline 16121, info@dncrp.gov.bd, office at TCB Bhaban, Karwan Bazar; official site
+//   dncrp.portal.gov.bd; online complaint portal dncrp.com (needs mobile number and NID)
+//   (The Daily Star Dec 2025, The Financial Express Jan 2023, Bangla Tribune, ITV BD)
 // - bKash helpline 16247 or 02-55663001 (bkash.com/en/help/contact-us)
 // - Bangladesh Bank Customer Interest Protection Centre (CIPC): hotline 16236 on working days,
 //   bb.cipc@bb.org.bd. Covers banks, finance companies and mobile financial services, after the
@@ -36,11 +38,12 @@ export function escalationRoutes(analysis: CaseAnalysis): EscalationRoute[] {
     routes.push({
       id: "dncrp",
       title: "Directorate of National Consumer Rights Protection",
-      when: "The main route for this case. The seller can be fined, and you receive 25% of any fine collected.",
+      when: "The main route for this case. The directorate can fine the seller, and 25% of any fine it collects is paid to you.",
       how: [
-        `File online at ${PROCEDURE.website}, email ${PROCEDURE.email}, or submit the printed letter at their office.`,
-        `Hotline ${PROCEDURE.hotline} for questions.`,
-        `File within ${PROCEDURE.deadlineDays} days of the problem (${PROCEDURE.deadlineSection}).`,
+        `Online: the complaint portal at ${PROCEDURE.complaintPortal} (sign up with your mobile number and NID), or email the letter and photos to ${PROCEDURE.email}.`,
+        `In person: hand in the signed letter at ${PROCEDURE.office}, or at your divisional or district consumer rights office.`,
+        `Attach the receipt or payment proof, and for online orders the page link and your chats. Keep a copy.`,
+        `File within ${PROCEDURE.deadlineDays} days of the problem (${PROCEDURE.deadlineSection}). Questions: hotline ${PROCEDURE.hotline}.`,
       ],
     });
   }

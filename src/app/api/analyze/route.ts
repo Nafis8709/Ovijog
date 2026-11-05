@@ -7,6 +7,9 @@
 
 import { AiConfigError, describeAiError, isMockMode } from "@/lib/gemini";
 import { runCaseAgent } from "@/lib/agent";
+import { cleanPurchaseDate, cleanUserText, guardRequest, readJsonBody } from "@/lib/guard";
+import { isAllowedImageDataUrl } from "@/lib/gemini";
+import { todayIso } from "@/lib/deadline";
 
 export const maxDuration = 60; // seconds; two AI calls with images can take a while
 
@@ -20,27 +23,30 @@ function badRequest(message: string): Response {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  let body: { story?: unknown; purchaseDate?: unknown; images?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return badRequest("Request body must be JSON.");
+  const blocked = guardRequest(request, "analyze");
+  if (blocked !== null) {
+    return blocked;
   }
+  const read = await readJsonBody(request);
+  if (!read.ok) {
+    return read.response;
+  }
+  const body = (read.body ?? {}) as { story?: unknown; purchaseDate?: unknown; images?: unknown };
 
-  const story = typeof body.story === "string" ? body.story.trim() : "";
+  const rawStory = typeof body.story === "string" ? body.story.trim() : "";
+  if (rawStory.length > MAX_STORY) {
+    return badRequest("The story is too long. Please keep it under 4000 characters.");
+  }
+  const story = cleanUserText(rawStory, MAX_STORY);
   if (story.length < MIN_STORY) {
     return badRequest("Please describe what happened in a little more detail (at least 20 characters).");
   }
-  if (story.length > MAX_STORY) {
-    return badRequest("The story is too long. Please keep it under 4000 characters.");
-  }
-
-  const purchaseDate = typeof body.purchaseDate === "string" ? body.purchaseDate : "";
+  const purchaseDate = cleanPurchaseDate(body.purchaseDate, todayIso());
 
   const images: string[] = [];
   if (Array.isArray(body.images)) {
     for (const item of body.images.slice(0, MAX_IMAGES)) {
-      if (typeof item !== "string" || item.length > MAX_IMAGE_CHARS || !item.startsWith("data:image/")) {
+      if (typeof item !== "string" || item.length > MAX_IMAGE_CHARS || !isAllowedImageDataUrl(item)) {
         return badRequest("One of the screenshots is too large or is not an image.");
       }
       images.push(item);

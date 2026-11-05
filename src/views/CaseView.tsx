@@ -6,8 +6,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { deleteCase, getCase, saveCase } from "@/lib/caseStore";
-import { computeDeadline, formatDate, formatTaka } from "@/lib/deadline";
+import { deleteCase, getCase, saveCase, STORAGE_FULL_MESSAGE } from "@/lib/caseStore";
+import { computeDeadline, dhakaDateOf, formatDate, formatTaka } from "@/lib/deadline";
 import { findSection, PROCEDURE } from "@/lib/law";
 import type { Case, Complainant } from "@/lib/types";
 import DeadlineStamp from "@/components/DeadlineStamp";
@@ -19,11 +19,10 @@ import Negotiator from "@/components/Negotiator";
 import EscalationRoutes from "@/components/EscalationRoutes";
 import NextStep from "@/components/NextStep";
 import AddEvidence from "@/components/AddEvidence";
+import ComplainantForm, { complainantProblem, EMPTY_COMPLAINANT } from "@/components/ComplainantForm";
 import { scoreEvidence } from "@/lib/evidence";
 import { escalationRoutes } from "@/lib/escalation";
 import { downloadDeadline } from "@/lib/calendar";
-
-const EMPTY_COMPLAINANT: Complainant = { name: "", phone: "", email: "", address: "" };
 
 export default function CaseView() {
   const params = useParams<{ id: string }>();
@@ -34,6 +33,8 @@ export default function CaseView() {
   const [complainant, setComplainant] = useState<Complainant>(EMPTY_COMPLAINANT);
   const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [editingDetails, setEditingDetails] = useState(false);
 
   useEffect(() => {
     const found = getCase(params.id);
@@ -46,13 +47,46 @@ export default function CaseView() {
     setLoaded(true);
   }, [params.id]);
 
-  function update(changes: Partial<Case>) {
+  // Saves a change to the case. If the browser refuses (storage full), nothing changes on screen
+  // either, and the user is told what to do.
+  function update(changes: Partial<Case>): boolean {
     if (item === null) {
-      return;
+      return false;
     }
     const updated: Case = { ...item, ...changes };
-    saveCase(updated);
+    if (!saveCase(updated)) {
+      setSaveError(STORAGE_FULL_MESSAGE);
+      return false;
+    }
+    setSaveError("");
     setItem(updated);
+    return true;
+  }
+
+  // The photo summary for each photo number (evidence items carry their own index).
+  function evidenceFor(index: number) {
+    if (item === null) {
+      return undefined;
+    }
+    for (const evidence of item.evidence) {
+      if (evidence.index === index) {
+        return evidence;
+      }
+    }
+    return undefined;
+  }
+
+  function saveDetails(event: React.FormEvent) {
+    event.preventDefault();
+    const problem = complainantProblem(complainant);
+    if (problem !== "") {
+      setError(problem);
+      return;
+    }
+    setError("");
+    if (update({ complainant: complainant })) {
+      setEditingDetails(false);
+    }
   }
 
   async function draftComplaint(event: React.FormEvent) {
@@ -60,8 +94,9 @@ export default function CaseView() {
     if (item === null) {
       return;
     }
-    if (complainant.name.trim() === "" || complainant.phone.trim() === "" || complainant.address.trim() === "") {
-      setError("Name, phone and address are needed on a formal complaint.");
+    const problem = complainantProblem(complainant);
+    if (problem !== "") {
+      setError(problem);
       return;
     }
     setError("");
@@ -76,7 +111,7 @@ export default function CaseView() {
           analysis: item.analysis,
           demandSentAt: item.demandSentAt,
           imageCount: item.images.length,
-          evidenceSummaries: item.images.map((_, index) => (item.evidence[index] ? item.evidence[index].summary : "")),
+          evidenceSummaries: item.images.map((_, index) => evidenceFor(index)?.summary || ""),
           sellerResponses: item.negotiation.map((turn) => `${turn.analysis.tactic}: ${turn.sellerSaid}`),
         }),
       });
@@ -86,10 +121,14 @@ export default function CaseView() {
         setDrafting(false);
         return;
       }
-      const updated: Case = { ...item, complainant: complainant, complaint: data.complaint, status: "complaint_ready" };
-      saveCase(updated);
-      setItem(updated);
-      router.push(`/case/${item.id}/letter`);
+      // A complaint that was already filed stays "filed"; otherwise it is now ready.
+      const status = item.status === "complaint_filed" ? "complaint_filed" : "complaint_ready";
+      const saved = update({ complainant: complainant, complaint: data.complaint, status: status });
+      setDrafting(false);
+      if (saved) {
+        setEditingDetails(false);
+        router.push(`/case/${item.id}/letter`);
+      }
     } catch {
       setError("Could not reach the server. Check your internet connection.");
       setDrafting(false);
@@ -135,15 +174,15 @@ export default function CaseView() {
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-6 sm:space-y-10 sm:py-10">
       {/* File cover: what, who, how much, and the deadline stamp */}
       <section className="file-cover p-2 shadow-[4px_4px_0_var(--ink)] sm:p-4 md:p-6 md:shadow-[6px_6px_0_var(--ink)]">
-        <div className="sheet flex flex-wrap items-start justify-between gap-6 rounded-sm p-4 sm:p-5 md:flex-nowrap md:p-7">
+        <div className="sheet flex flex-wrap items-start justify-between gap-6 overflow-hidden rounded-sm p-4 sm:p-5 md:flex-nowrap md:p-7">
           <div className="min-w-0 max-w-xl md:flex-1">
-            <p className="text-sm text-ink-soft">Case opened {formatDate(item.createdAt.slice(0, 10))}</p>
+            <p className="text-sm text-ink-soft">Case opened {formatDate(dhakaDateOf(item.createdAt))}</p>
             <h1 className="display mt-1 text-3xl break-words md:text-4xl">
               {analysis.productOrService || "Your case"}
               {analysis.amountPaid !== null && <span className="text-green">, {formatTaka(analysis.amountPaid)}</span>}
             </h1>
             <p className="mt-3 sm:text-lg">{analysis.summary}</p>
-            <p className="mt-2 text-ink-soft">{analysis.summaryBn}</p>
+            <p lang="bn" className="mt-2 text-ink-soft">{analysis.summaryBn}</p>
             <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
               <dt className="text-ink-soft">Seller</dt>
               <dd className="break-words">{analysis.sellerName || "Not found yet"}</dd>
@@ -170,6 +209,12 @@ export default function CaseView() {
           </div>
         </div>
       </section>
+
+      {saveError && (
+        <p role="alert" className="rounded border-l-4 border-red bg-white p-3 text-red">
+          {saveError}
+        </p>
+      )}
 
       {/* One clear action, so nobody has to scroll to find what to do */}
       <NextStep item={item} deadline={deadline} score={evidenceScore} canAct={canAct} />
@@ -214,7 +259,12 @@ export default function CaseView() {
               English
             </button>
           </div>
-          <p className="ledger mt-4 whitespace-pre-wrap break-words rounded border border-paper-line p-3 leading-8 sm:p-4">{demandMessage}</p>
+          <p
+            lang={messageLanguage === "bn" ? "bn" : "en"}
+            className="ledger mt-4 whitespace-pre-wrap break-words rounded border border-paper-line p-3 leading-8 sm:p-4"
+          >
+            {demandMessage}
+          </p>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <CopyButton text={demandMessage} label="Copy message" />
             {item.status === "new" && (
@@ -231,7 +281,7 @@ export default function CaseView() {
           {item.status === "demand_sent" && (
             <div className="mt-6 border-t border-paper-line pt-5">
               <p>
-                Sent on {formatDate(item.demandSentAt.slice(0, 10))}. Give the seller 3 days. What happened?
+                Sent on {formatDate(dhakaDateOf(item.demandSentAt))}. Give the seller 3 days. What happened?
               </p>
               <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <button type="button" className="btn btn-quiet" onClick={() => update({ status: "resolved" })}>
@@ -244,7 +294,16 @@ export default function CaseView() {
             </div>
           )}
 
-          {item.status !== "new" && <Negotiator item={item} onUpdate={update} />}
+          {item.status !== "new" && item.status !== "resolved" && <Negotiator item={item} onUpdate={update} />}
+
+          {item.status === "resolved" && (
+            <div className="mt-6 border-t border-paper-line pt-5">
+              <p>You marked this case as resolved.</p>
+              <button type="button" className="btn btn-quiet mt-3" onClick={() => update({ status: "demand_sent" })}>
+                Not resolved after all? Reopen the case
+              </button>
+            </div>
+          )}
         </section>
       )}
 
@@ -264,68 +323,73 @@ export default function CaseView() {
             </p>
           )}
 
-          {item.complaint !== null ? (
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link href={`/case/${item.id}/letter`} className="btn btn-primary">
-                Open the complaint letter
-              </Link>
-              {item.status !== "complaint_filed" && (
-                <button type="button" className="btn btn-quiet" onClick={() => update({ status: "complaint_filed" })}>
-                  I filed it
+          {item.complaint !== null && !editingDetails ? (
+            <div className="mt-5 space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Link href={`/case/${item.id}/letter`} className="btn btn-primary">
+                  Open the complaint letter
+                </Link>
+                {item.status !== "complaint_filed" && (
+                  <button type="button" className="btn btn-quiet" onClick={() => update({ status: "complaint_filed" })}>
+                    I filed it
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 border-t border-paper-line pt-4 text-sm sm:flex-row sm:flex-wrap sm:gap-4">
+                <button
+                  type="button"
+                  className="inline-flex min-h-11 items-center font-semibold text-green underline underline-offset-4"
+                  onClick={() => {
+                    setComplainant(item.complainant || EMPTY_COMPLAINANT);
+                    setEditingDetails(true);
+                  }}
+                >
+                  Change my name, phone or address
                 </button>
-              )}
-            </div>
-          ) : (
-            <form onSubmit={draftComplaint} className="mt-5 grid gap-4 md:grid-cols-2">
-              <label className="block">
-                <span className="text-sm font-semibold">Full name</span>
-                <input
-                  className="field mt-1"
-                  autoComplete="name"
-                  value={complainant.name}
-                  onChange={(e) => setComplainant({ ...complainant, name: e.target.value })}
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold">Mobile number</span>
-                <input
-                  className="field mt-1"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  placeholder="01XXXXXXXXX"
-                  value={complainant.phone}
-                  onChange={(e) => setComplainant({ ...complainant, phone: e.target.value })}
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-semibold">Email (optional)</span>
-                <input
-                  className="field mt-1"
-                  type="email"
-                  autoComplete="email"
-                  value={complainant.email}
-                  onChange={(e) => setComplainant({ ...complainant, email: e.target.value })}
-                />
-              </label>
-              <label className="block md:col-span-2">
-                <span className="text-sm font-semibold">Address</span>
-                <textarea
-                  className="field mt-1 min-h-20"
-                  autoComplete="street-address"
-                  value={complainant.address}
-                  onChange={(e) => setComplainant({ ...complainant, address: e.target.value })}
-                />
-              </label>
+                <button
+                  type="button"
+                  className="inline-flex min-h-11 items-center font-semibold text-green underline underline-offset-4 disabled:opacity-50"
+                  disabled={drafting}
+                  onClick={(event) => {
+                    if (window.confirm("Write the letter again, including any new photos and seller replies? The current letter will be replaced.")) {
+                      draftComplaint(event);
+                    }
+                  }}
+                >
+                  {drafting ? "Rewriting the letter…" : "Rewrite the letter with my latest proof"}
+                </button>
+              </div>
               {error && (
-                <p role="alert" className="text-red md:col-span-2">
+                <p role="alert" className="text-red">
                   {error}
                 </p>
               )}
-              <div className="md:col-span-2">
+            </div>
+          ) : (
+            <form onSubmit={item.complaint !== null ? saveDetails : draftComplaint} className="mt-5 space-y-4" noValidate>
+              <ComplainantForm value={complainant} onChange={setComplainant} idPrefix="complainant" />
+              {error && (
+                <p role="alert" className="text-red">
+                  {error}
+                </p>
+              )}
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <button type="submit" className="btn btn-primary w-full sm:w-auto" disabled={drafting}>
-                  {drafting ? "Drafting the complaint…" : "Draft my complaint"}
+                  {item.complaint !== null ? "Save my details" : drafting ? "Drafting the complaint…" : "Draft my complaint"}
                 </button>
+                {item.complaint !== null && (
+                  <button
+                    type="button"
+                    className="btn btn-quiet w-full sm:w-auto"
+                    onClick={() => {
+                      setComplainant(item.complainant || EMPTY_COMPLAINANT);
+                      setError("");
+                      setEditingDetails(false);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             </form>
           )}
@@ -365,12 +429,12 @@ export default function CaseView() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={image} alt={`Photo ${index + 1}`} className="w-full rounded border border-ink-soft" />
                   <p className="mt-1 text-sm font-semibold">Photo {index + 1}</p>
-                  {item.evidence[index] && (
+                  {evidenceFor(index) && (
                     <div className="break-words text-sm text-ink-soft">
-                      <p>{item.evidence[index].summary}</p>
-                      {item.evidence[index].facts.length > 0 && (
+                      <p>{evidenceFor(index)?.summary}</p>
+                      {(evidenceFor(index)?.facts.length ?? 0) > 0 && (
                         <ul className="mt-1 list-disc pl-4">
-                          {item.evidence[index].facts.map((fact) => (
+                          {evidenceFor(index)?.facts.map((fact) => (
                             <li key={fact}>{fact}</li>
                           ))}
                         </ul>

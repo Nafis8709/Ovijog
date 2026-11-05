@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { loadCases } from "@/lib/caseStore";
+import { isExampleCase, loadCases } from "@/lib/caseStore";
 import { computeDeadline, formatTaka } from "@/lib/deadline";
 import DeadlineStamp from "@/components/DeadlineStamp";
 import DemoCaseButton from "@/components/DemoCaseButton";
@@ -21,7 +21,7 @@ const STATUS_LABELS: Record<CaseStatus, string> = {
 function totalAtStake(cases: Case[]): number {
   let total = 0;
   for (const item of cases) {
-    if (item.status !== "resolved" && item.analysis.amountPaid !== null) {
+    if (!isExampleCase(item) && item.status !== "resolved" && item.analysis.amountPaid !== null) {
       total += item.analysis.amountPaid;
     }
   }
@@ -31,7 +31,7 @@ function totalAtStake(cases: Case[]): number {
 function totalRecovered(cases: Case[]): number {
   let total = 0;
   for (const item of cases) {
-    if (item.status === "resolved" && item.analysis.amountPaid !== null) {
+    if (!isExampleCase(item) && item.status === "resolved" && item.analysis.amountPaid !== null) {
       total += item.analysis.amountPaid;
     }
   }
@@ -101,7 +101,9 @@ export default function CasesPage() {
                       {item.analysis.amountPaid !== null && `, ${formatTaka(item.analysis.amountPaid)}`}
                     </p>
                     <p className="text-ink-soft">{item.analysis.sellerName || "Unknown seller"}</p>
-                    <p className="mt-1 text-sm font-semibold text-green">{STATUS_LABELS[item.status]}</p>
+                    <p className="mt-1 text-sm font-semibold text-green">
+                      {isExampleCase(item) ? "Example case" : STATUS_LABELS[item.status]}
+                    </p>
                   </div>
                   {item.status !== "resolved" && <DeadlineStamp deadline={deadline} animate={false} />}
                 </div>

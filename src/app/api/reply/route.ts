@@ -8,6 +8,7 @@ import { AiConfigError, dataUrlToImage, describeAiError, generateJson, isMockMod
 import { buildReplyPrompt, replySchema } from "@/lib/prompts";
 import { cleanAnalysis, cleanReply } from "@/lib/validate";
 import { mockReply } from "@/lib/mockAi";
+import { cleanUserText, guardRequest, readJsonBody } from "@/lib/guard";
 
 const MAX_REPLY = 2000;
 const MAX_IMAGE_CHARS = 2_000_000;
@@ -15,14 +16,17 @@ const MAX_IMAGE_CHARS = 2_000_000;
 export const maxDuration = 60; // seconds, room for retries when the AI is busy
 
 export async function POST(request: Request): Promise<Response> {
-  let body: { analysis?: unknown; history?: unknown; sellerReply?: unknown; image?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "Request body must be JSON." }, { status: 400 });
+  const blocked = guardRequest(request, "reply");
+  if (blocked !== null) {
+    return blocked;
   }
+  const read = await readJsonBody(request);
+  if (!read.ok) {
+    return read.response;
+  }
+  const body = (read.body ?? {}) as { analysis?: unknown; history?: unknown; sellerReply?: unknown; image?: unknown };
 
-  const sellerReply = typeof body.sellerReply === "string" ? body.sellerReply.trim().slice(0, MAX_REPLY) : "";
+  const sellerReply = cleanUserText(body.sellerReply, MAX_REPLY);
 
   const images: ImageInput[] = [];
   if (typeof body.image === "string" && body.image !== "") {

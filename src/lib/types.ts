@@ -43,8 +43,13 @@ export interface CaseAnalysis {
   demandMessageEn: string; // English version for reference
 }
 
+// The directorate asks for the complainant's full name, father's and mother's
+// names, address, phone, email (if any) and occupation.
 export interface Complainant {
   name: string;
+  fatherName: string;
+  motherName: string;
+  occupation: string;
   phone: string;
   email: string;
   address: string;

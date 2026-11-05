@@ -3,7 +3,7 @@
 // 30-day countdown always looks realistic. All names here are fictional.
 
 import { todayIso } from "./deadline";
-import { newCaseId } from "./caseStore";
+import { EXAMPLE_PREFIX } from "./caseStore";
 import type { Case } from "./types";
 
 function daysAgo(days: number): string {
@@ -18,7 +18,7 @@ export function buildDemoCase(): Case {
   const blockedDate = daysAgo(6);
 
   return {
-    id: newCaseId(),
+    id: EXAMPLE_PREFIX + Date.now().toString(36),
     createdAt: new Date().toISOString(),
     story:
       "Facebook page 'Winter Trend BD (example)' theke ekta leather jacket order korsilam 2,400 taka bKash e advance diye. Post e bolsilo 'original leather, size L'. Jacket ashse rexine er, size M, ar hata chera. Page e message dilam, prothome bolse exchange korbe, pore amake block kore dise.",

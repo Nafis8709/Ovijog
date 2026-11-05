@@ -184,11 +184,11 @@ npm run start         # run the production build
 
 ## Buildathon checklist
 
-- [ ] Put the official sticker image at `public/buildathon-sticker.png` (it replaces the text badge in the navbar automatically).
-- [ ] Deploy and test the live link on a phone.
+- [x] Official sticker image at `public/buildathon-sticker.webp`, shown in the strip above the navbar (a text badge appears if it fails to load).
+- [x] Deployed on Vercel; full flow tested at 320, 390, 768 and 1280 px.
 - [ ] Run `npm run eval` with your key and note the score for the deck.
 - [ ] Run 5–10 real cases from friends and note the total amount at stake for the deck.
-- [ ] Check every entry in `src/lib/law.ts` against the official text at bdlaws.minlaw.gov.bd.
+- [x] Check every section number in `src/lib/law.ts` against the official numbering (done 5 Nov 2026).
 - [ ] Make the 5-slide deck (outline in `docs/PITCH.md`).
 - [ ] Optional: record an English demo video and upload it to YouTube.
 

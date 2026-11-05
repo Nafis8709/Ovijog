@@ -38,6 +38,7 @@
 }
 
 html {
+  overflow-x: clip; /* safety net: nothing (e.g. the stamp animation) may cause sideways scrolling */
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
 }

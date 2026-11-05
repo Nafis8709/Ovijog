@@ -5,14 +5,17 @@
 
 import { useRouter } from "next/navigation";
 import { buildDemoCase } from "@/lib/demoCase";
-import { saveCase } from "@/lib/caseStore";
+import { saveExampleCase, STORAGE_FULL_MESSAGE } from "@/lib/caseStore";
 
 export default function DemoCaseButton({ label }: { label: string }) {
   const router = useRouter();
 
   function openDemo() {
     const demo = buildDemoCase();
-    saveCase(demo);
+    if (!saveExampleCase(demo)) {
+      window.alert(STORAGE_FULL_MESSAGE);
+      return;
+    }
     router.push(`/case/${demo.id}`);
   }
 

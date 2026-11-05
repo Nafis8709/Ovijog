@@ -7,11 +7,23 @@ import { AiConfigError, describeAiError, generateJson, isMockMode } from "@/lib/
 import { mockComplaint } from "@/lib/mockAi";
 import { buildComplaintPrompt, complaintSchema } from "@/lib/prompts";
 import { cleanAnalysis, cleanComplaint } from "@/lib/validate";
+import { cleanPurchaseDate, cleanUserText, guardRequest, readJsonBody } from "@/lib/guard";
+import { dhakaDateOf, todayIso } from "@/lib/deadline";
+
+const MAX_PHOTOS = 8;
 
 export const maxDuration = 60; // seconds, room for retries when the AI is busy
 
 export async function POST(request: Request): Promise<Response> {
-  let body: {
+  const blocked = guardRequest(request, "complaint");
+  if (blocked !== null) {
+    return blocked;
+  }
+  const read = await readJsonBody(request);
+  if (!read.ok) {
+    return read.response;
+  }
+  const body = (read.body ?? {}) as {
     story?: unknown;
     purchaseDate?: unknown;
     analysis?: unknown;
@@ -20,11 +32,6 @@ export async function POST(request: Request): Promise<Response> {
     sellerResponses?: unknown;
     evidenceSummaries?: unknown;
   };
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "Request body must be JSON." }, { status: 400 });
-  }
 
   // Re-clean the analysis: never trust data coming back from the browser.
   const analysis = cleanAnalysis(body.analysis);
@@ -35,17 +42,21 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  const story = typeof body.story === "string" ? body.story.slice(0, 4000) : "";
-  const purchaseDate = typeof body.purchaseDate === "string" ? body.purchaseDate : "";
-  const demandSentAt = typeof body.demandSentAt === "string" ? body.demandSentAt : "";
-  const imageCount = typeof body.imageCount === "number" ? body.imageCount : 0;
+  const story = cleanUserText(body.story, 4000);
+  const purchaseDate = cleanPurchaseDate(body.purchaseDate, todayIso());
+  // The demand date as a Bangladesh calendar date (YYYY-MM-DD), or "".
+  const demandSentAt = typeof body.demandSentAt === "string" ? dhakaDateOf(body.demandSentAt) : "";
+  const imageCount =
+    typeof body.imageCount === "number" && Number.isFinite(body.imageCount)
+      ? Math.max(0, Math.min(MAX_PHOTOS, Math.floor(body.imageCount)))
+      : 0;
 
   // Short summaries of how the seller replied during negotiation (from the Negotiator).
   const responseLines: string[] = [];
   if (Array.isArray(body.sellerResponses)) {
     for (const item of body.sellerResponses.slice(0, 6)) {
       if (typeof item === "string" && item.trim() !== "") {
-        responseLines.push("- " + item.trim().slice(0, 300));
+        responseLines.push("- " + cleanUserText(item, 300));
       }
     }
   }
@@ -53,14 +64,14 @@ export async function POST(request: Request): Promise<Response> {
   // The only attachments that exist: one per screenshot, plus Ovijog's own records.
   const availableEvidence: string[] = [];
   if (Array.isArray(body.evidenceSummaries)) {
-    const summaries = body.evidenceSummaries.slice(0, Math.min(imageCount, 4));
+    const summaries = body.evidenceSummaries.slice(0, imageCount);
     for (let i = 0; i < summaries.length; i++) {
-      const summary = typeof summaries[i] === "string" && summaries[i].trim() !== "" ? summaries[i].trim().slice(0, 160) : "screenshot";
+      const summary = cleanUserText(summaries[i], 160) || "photo";
       availableEvidence.push(`Screenshot ${i + 1}: ${summary}`);
     }
   }
   if (demandSentAt) {
-    availableEvidence.push(`Copy of the written demand sent to the seller on ${demandSentAt.slice(0, 10)}`);
+    availableEvidence.push(`Copy of the written demand sent to the seller on ${demandSentAt}`);
   }
   if (responseLines.length > 0) {
     availableEvidence.push(`Record of the seller's ${responseLines.length} reply/replies`);

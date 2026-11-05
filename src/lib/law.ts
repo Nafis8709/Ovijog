@@ -14,8 +14,9 @@
 // - s.60 (30-day limit) and s.76(4) (25% of fine to complainant): The Daily
 //   Star, ITV BD (Oct 2026), DNCRP district portals.
 //
-// BEFORE THE FINAL PITCH: compare every entry with the official text at
-// bdlaws.minlaw.gov.bd and fix anything that differs.
+// CHECKED (5 Nov 2026): every section number and title below matches the official
+// numbering as listed by NTV ("ভোক্তা অধিকার আইনে অপরাধীর হয় দণ্ড...", sections 36-56, 76-78)
+// and BSS (Aug 2026, s.44 and s.45). Official text: bdlaws.minlaw.gov.bd/act-1014.html
 
 export interface LawSection {
   section: number;
@@ -173,7 +174,11 @@ export const PROCEDURE = {
   rewardSection: "Section 76(4)",
   hotline: "16121",
   email: "info@dncrp.gov.bd",
-  website: "https://dncrp.gov.bd",
+  // Official website (The Daily Star, Dec 2025) and the online complaint portal, which needs
+  // the complainant's mobile number and NID (The Financial Express, Jan 2023; Bangla Tribune).
+  website: "dncrp.portal.gov.bd",
+  complaintPortal: "dncrp.com",
+  office: "TCB Bhaban (8th floor), Karwan Bazar, Dhaka-1215",
 };
 
 // Ministry of Commerce, Digital Commerce Operation Guidelines 2021

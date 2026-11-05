@@ -11,7 +11,7 @@ import { getCase } from "@/lib/caseStore";
 import { todayIso } from "@/lib/deadline";
 import { PROCEDURE } from "@/lib/law";
 import { toBanglaNumber } from "@/components/DeadlineStamp";
-import CopyButton from "@/components/CopyButton";
+import CopyButton, { copyText } from "@/components/CopyButton";
 import type { Case } from "@/lib/types";
 
 function banglaDate(iso: string): string {
@@ -52,6 +52,15 @@ function letterAsText(item: Case, dateText: string): string {
   lines.push("");
   lines.push("বিনীত নিবেদক,");
   lines.push(p.name);
+  if (p.fatherName) {
+    lines.push(`পিতার নাম: ${p.fatherName}`);
+  }
+  if (p.motherName) {
+    lines.push(`মাতার নাম: ${p.motherName}`);
+  }
+  if (p.occupation) {
+    lines.push(`পেশা: ${p.occupation}`);
+  }
   lines.push(`মোবাইল: ${p.phone}`);
   if (p.email) {
     lines.push(`ই-মেইল: ${p.email}`);
@@ -64,6 +73,7 @@ export default function LetterView() {
   const params = useParams<{ id: string }>();
   const [item, setItem] = useState<Case | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [emailNote, setEmailNote] = useState("");
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -91,9 +101,30 @@ export default function LetterView() {
   const person = item.complainant;
   const dateText = banglaDate(todayIso());
   const fullText = letterAsText(item, dateText);
-  const mailto =
-    `mailto:${PROCEDURE.email}?subject=${encodeURIComponent(complaint.subjectBn.replace(/^বিষয়:\s*/, ""))}` +
-    `&body=${encodeURIComponent(fullText)}`;
+  const subject = encodeURIComponent(complaint.subjectBn.replace(/^বিষয়:\s*/, ""));
+  const fullBody = encodeURIComponent(fullText);
+
+  // Many phones and email apps cut off long mailto links (Bangla text becomes very long once encoded).
+  // So the letter is always copied first; it is put in the email only when it is short enough.
+  async function emailLetter() {
+    const copied = await copyText(fullText);
+    const fits = fullBody.length < 1800;
+    const body = fits
+      ? fullBody
+      : encodeURIComponent(
+          copied
+            ? "(আমার অভিযোগপত্রটি কপি করা হয়েছে। এখানে পেস্ট করুন এবং PDF ও স্ক্রিনশট সংযুক্ত করুন।)"
+            : "(অভিযোগপত্রটি এখানে পেস্ট করুন এবং PDF ও স্ক্রিনশট সংযুক্ত করুন।)",
+        );
+    setEmailNote(
+      copied
+        ? fits
+          ? "Your email app is opening. Attach the PDF and your photos before sending."
+          : "The letter is copied. Paste it into the email, then attach the PDF and your photos."
+        : "Your email app is opening. Use “Copy letter text” first, then paste it into the email.",
+    );
+    window.location.href = `mailto:${PROCEDURE.email}?subject=${subject}&body=${body}`;
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
@@ -108,16 +139,21 @@ export default function LetterView() {
           Print or save as PDF
         </button>
         <CopyButton text={fullText} label="Copy letter text" />
-        <a href={mailto} className="btn btn-quiet py-2">
+        <button type="button" className="btn btn-quiet py-2" onClick={emailLetter}>
           Email to the directorate
-        </a>
+        </button>
       </div>
+      {emailNote && (
+        <p role="status" className="no-print -mt-3 mb-6 text-sm font-semibold text-green">
+          {emailNote}
+        </p>
+      )}
       <p className="no-print mb-6 text-sm text-ink-soft">
-        Read every line before you file. If you email it, attach the PDF and your screenshots too. Sign the printed
-        copy if you submit it in person.
+        Read every line before you file. If you email it, attach the PDF and your photos too. Sign the printed copy if
+        you submit it in person, and keep a copy for yourself.
       </p>
 
-      <article className="letter rounded border border-paper-line p-5 shadow-[4px_4px_0_var(--ink)] sm:p-8 md:p-12 md:shadow-[6px_6px_0_var(--ink)]">
+      <article lang="bn" className="letter rounded border border-paper-line p-5 shadow-[4px_4px_0_var(--ink)] sm:p-8 md:p-12 md:shadow-[6px_6px_0_var(--ink)]">
         <p className="text-right">তারিখ: {dateText}</p>
 
         <div className="mt-6">
@@ -156,6 +192,9 @@ export default function LetterView() {
           <p>বিনীত নিবেদক,</p>
           <div className="mt-10 w-48 border-t border-black pt-1 text-sm">স্বাক্ষর</div>
           <p className="mt-2 font-semibold">{person.name}</p>
+          {person.fatherName && <p>পিতার নাম: {person.fatherName}</p>}
+          {person.motherName && <p>মাতার নাম: {person.motherName}</p>}
+          {person.occupation && <p>পেশা: {person.occupation}</p>}
           <p>মোবাইল: {person.phone}</p>
           {person.email && <p>ই-মেইল: {person.email}</p>}
           <p className="whitespace-pre-wrap">ঠিকানা: {person.address}</p>
